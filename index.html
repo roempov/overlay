@@ -12,6 +12,7 @@
   html:not(.ov){padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   body{background:var(--bg);color:var(--txt);font:14px/1.4 'Poppins',system-ui,sans-serif}
 
+  html.ov{background:transparent;color-scheme:normal}
   /* ---------- overlay output (OBS) ---------- */
   body.overlay{background:transparent;overflow:hidden}
   body.overlay #editor{display:none}
@@ -159,7 +160,8 @@ const DEF={
 };
 const COLOR_LABELS=[['header','Header'],['headerBase','Header Base'],['title','Title'],['titleBase','Title Base'],['subtitle','Subtitle'],['subtitleBase','Subtitle Base']];
 const KEYS=['header','title','subtitle'];
-const isOverlay=new URLSearchParams(location.search).has('overlay');
+const QP=new URLSearchParams(location.search+'&'+location.hash.slice(1));
+const isOverlay=QP.has('overlay')||QP.has('room');
 if(isOverlay)document.documentElement.classList.add('ov');
 const $=id=>document.getElementById(id);
 
@@ -167,7 +169,7 @@ function merge(a,b){const o=Array.isArray(a)?[...a]:{...a};for(const k in b)o[k]
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function migrate(o){if(o&&o.text){o.slots=[{id:'s1',name:'Slot 1',text:o.text}];o.sel='s1';delete o.text}return o}
 function load(){
-  try{const p=new URLSearchParams(location.search).get('overlay');if(p)return merge(DEF,migrate(JSON.parse(decodeURIComponent(escape(atob(p))))))}catch(e){}
+  try{const p=QP.get('overlay');if(p)return merge(DEF,migrate(JSON.parse(decodeURIComponent(escape(atob(p))))))}catch(e){}
   if(!isOverlay){try{const s=localStorage.getItem('lt-cfg');if(s)return merge(DEF,migrate(JSON.parse(s)))}catch(e){}}
   return clone(DEF);
 }
@@ -178,11 +180,11 @@ if(!isOverlay)cfg.active=null;
 else if(!cfg.slots.some(s=>s.id===cfg.active))cfg.active=cfg.slots[0].id;
 function save(now){try{localStorage.setItem('lt-cfg',JSON.stringify(cfg))}catch(e){}if(!isOverlay)push(now)}
 /* ---- live sync editor -> OBS through ntfy.sh (static hosting has no server) ---- */
-let ROOM=new URLSearchParams(location.search).get('room');
+let ROOM=QP.get('room');
 if(!isOverlay){try{ROOM=localStorage.getItem('lt-room')}catch(e){}
   if(!ROOM){ROOM=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{localStorage.setItem('lt-room',ROOM)}catch(e){}}}
 const NTFY=()=>'https://ntfy.sh/ltov-'+ROOM;
-const liveUrl=()=>location.origin+location.pathname+'?overlay&room='+ROOM;
+const liveUrl=()=>location.origin+location.pathname+'?overlay=1&room='+ROOM;
 let dirty=false,busy=false,timer=null;
 const setLive=t=>{const e=document.getElementById('live');if(e)e.textContent=t};
 function pack(){const s=cfg.slots.find(x=>x.id===(cfg.active||cfg.sel))||cfg.slots[0];return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id}))}

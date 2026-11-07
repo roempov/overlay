@@ -105,11 +105,11 @@
   <div id="left">
     <div id="preview"></div>
     <div class="panel-bar">
-      <span style="color:var(--mut);font-size:12px">Preview</span>
+      <span id="live" style="color:var(--mut);font-size:12px">Preview</span>
       <button class="primary" id="copy">Copy overlay URL</button>
     </div>
     <div class="panel-bar"><input type="text" id="url" readonly placeholder="Overlay URL appears here"></div>
-    <p style="color:var(--mut);font-size:12px">In OBS: add a <b>Browser</b> source with this URL. Size <b>1080 × 1920</b> for 9:16 (or 1920 × 1080 for 16:9). The URL turns on the slot that is ON, or the selected slot if none is ON. The background is transparent.</p>
+    <p style="color:var(--mut);font-size:12px">In OBS: add a <b>Browser</b> source with this URL. Size <b>1080 × 1920</b> for 9:16 (or 1920 × 1080 for 16:9). OBS updates live while this editor page stays open: edits and ▶/■ are sent through the free ntfy.sh relay. Keep the URL private, since it contains your secret room code. The background is transparent.</p>
   </div>
 
   <div id="right">
@@ -176,7 +176,24 @@ if(!cfg.slots.length)cfg.slots=clone(DEF.slots);
 if(!cfg.slots.some(s=>s.id===cfg.sel))cfg.sel=cfg.slots[0].id;
 if(!isOverlay)cfg.active=null;
 else if(!cfg.slots.some(s=>s.id===cfg.active))cfg.active=cfg.slots[0].id;
-function save(){try{localStorage.setItem('lt-cfg',JSON.stringify(cfg))}catch(e){}}
+function save(now){try{localStorage.setItem('lt-cfg',JSON.stringify(cfg))}catch(e){}if(!isOverlay)push(now)}
+/* ---- live sync editor -> OBS through ntfy.sh (static hosting has no server) ---- */
+let ROOM=new URLSearchParams(location.search).get('room');
+if(!isOverlay){try{ROOM=localStorage.getItem('lt-room')}catch(e){}
+  if(!ROOM){ROOM=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{localStorage.setItem('lt-room',ROOM)}catch(e){}}}
+const NTFY=()=>'https://ntfy.sh/ltov-'+ROOM;
+const liveUrl=()=>location.origin+location.pathname+'?overlay&room='+ROOM;
+let dirty=false,busy=false,timer=null;
+const setLive=t=>{const e=document.getElementById('live');if(e)e.textContent=t};
+function pack(){const s=cfg.slots.find(x=>x.id===(cfg.active||cfg.sel))||cfg.slots[0];return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id}))}
+function push(now){dirty=true;clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
+async function flush(){
+  if(busy||!dirty)return;busy=true;dirty=false;let ok=true;
+  try{ok=(await fetch(NTFY(),{method:'POST',body:pack()})).ok}catch(e){ok=false}
+  busy=false;
+  if(!ok){dirty=true;setLive('○ Live: retrying…');setTimeout(flush,5000)}
+  else{setLive('● Live: synced');if(dirty)push()}
+}
 const cur=()=>cfg.slots.find(s=>s.id===cfg.sel);
 function ref(p){return p.startsWith('slot.')?[cur(),p.slice(5)]:[cfg,p]}
 function getP(p){const[r,q]=ref(p);return q.split('.').reduce((o,k)=>o[k],r)}
@@ -201,9 +218,9 @@ function paint(){
   const[W,H]=dims();canvas.style.width=W+'px';canvas.style.height=H+'px';
   [...canvas.querySelectorAll('.lt')].forEach(n=>{if(!cfg.slots.some(s=>s.id===n.dataset.id))n.remove()});
   cfg.slots.forEach(s=>{
-    let n=canvas.querySelector('.lt[data-id="'+s.id+'"]');
+    let n=canvas.querySelector('.lt[data-id="'+s.id+'"]');const fresh=!n;
     if(!n){n=document.createElement('div');n.dataset.id=s.id;n.innerHTML='<i class="bar"></i><div class="header"><b></b></div><div class="title"><b></b></div><div class="subtitle"><b></b></div>';canvas.appendChild(n)}
-    n.className='lt p-'+cfg.pos+(cfg.active===s.id?' on':'');
+    const cls='lt p-'+cfg.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+(cfg.active===s.id?' on':'');
     n.style.setProperty('--ac',cfg.colors.headerBase);
     KEYS.forEach(k=>{
       const d=n.querySelector('.'+k),v=s.text[k]||'',st=cfg.style[k],base=cfg.colors[k+'Base'],g=cfg.glass[k];
@@ -280,7 +297,7 @@ if(!isOverlay){
       case 'w':if(i<cfg.slots.length-1){cfg.slots.splice(i+1,0,cfg.slots.splice(i,1)[0]);renderSlots()}break;
       case 'x':if(cfg.slots.length>1){cfg.slots.splice(i,1);if(cfg.active===id)cfg.active=null;if(cfg.sel===id)cfg.sel=cfg.slots[Math.max(0,i-1)].id;renderSlots();sync()}break;
     }
-    paint();save();
+    paint();save(b.dataset.a==='t');
   });
   list.addEventListener('input',e=>{
     if(!e.target.classList.contains('nm'))return;
@@ -293,16 +310,24 @@ if(!isOverlay){
   });
   $('reset').addEventListener('click',()=>{cfg=clone(DEF);renderSlots();sync();paint();save();});
   $('copy').addEventListener('click',async()=>{
-    const out=Object.assign({},cfg,{active:cfg.active||cfg.sel});
-    const code=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(out)))));
-    const url=location.origin+location.pathname+'?overlay='+code;
+    const url=liveUrl();push(true);
     const box=$('url');box.value=url;
     try{await navigator.clipboard.writeText(url);$('copy').textContent='Copied!'}
     catch(e){box.select();$('copy').textContent='Select & copy below'}
     setTimeout(()=>$('copy').textContent='Copy overlay URL',1800);
   });
   new ResizeObserver(fit).observe(pv);
-  renderSlots();sync();paint();
+  renderSlots();sync();paint();$('url').value=liveUrl();push(true);
+}else if(ROOM){
+  cfg.slots=[];cfg.active=null;paint();
+  const es=new EventSource(NTFY()+'/sse?since=latest');
+  es.onmessage=ev=>{try{
+    const m=JSON.parse(ev.data);if(m.event&&m.event!=='message')return;
+    const n=JSON.parse(m.message),map=new Map(cfg.slots.map(s=>[s.id,s]));
+    n.slots.forEach(s=>map.set(s.id,s));
+    const nc=merge(DEF,n);nc.slots=[...map.values()];cfg=nc;paint();
+  }catch(e){}};
+  addEventListener('resize',fit);
 }else{
   /* overlay: start hidden, then animate the active slot in */
   const a=cfg.active;cfg.active=null;paint();

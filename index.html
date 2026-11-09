@@ -219,7 +219,7 @@ let quotaBlockedUntil=0;try{quotaBlockedUntil=Number(localStorage.getItem('lt-nt
 if(quotaBlockedUntil<=Date.now())quotaBlockedUntil=0;
 const setLive=t=>{const e=document.getElementById('live');if(e)e.textContent=t};
 function pack(s=cur()){return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id,active:s.enabled?s.id:null}))}
-function packAll(){return JSON.stringify(Object.assign({},cfg,{slots:cfg.slots,active:cur()?.enabled?cur().id:null}))}
+function packAll(){return JSON.stringify(Object.assign({},cfg,{slots:cfg.slots,active:cur()?.enabled?cur().id:null,snapshotAll:true}))}
 function queueSlot(s){const room=roomFor(s),payload=pack(s);if(lastSent.get(s.id)===payload&&!pending.has(s.id))return;pending.set(s.id,{key:s.id,room,payload})}
 function scheduleQuotaRetry(){
   clearTimeout(timer);const wait=quotaBlockedUntil-Date.now();
@@ -341,6 +341,7 @@ if(!isOverlay){
     if(!row)return;
     const id=row.dataset.id;select(id);
     if(!b)return;
+    const structureChanged=['d','u','w','x'].includes(b.dataset.a);
     const i=cfg.slots.findIndex(s=>s.id===id);
     switch(b.dataset.a){
       case 't':{const s=cfg.slots[i];s.enabled=!s.enabled;b.classList.toggle('on',s.enabled);break}
@@ -351,7 +352,7 @@ if(!isOverlay){
       case 'w':if(i<cfg.slots.length-1){cfg.slots.splice(i+1,0,cfg.slots.splice(i,1)[0]);renderSlots()}break;
       case 'x':if(cfg.slots.length>1){cfg.slots.splice(i,1);if(cfg.active===id)cfg.active=null;if(cfg.sel===id)cfg.sel=cfg.slots[Math.max(0,i-1)].id;renderSlots();sync()}break;
     }
-    paint();save(b.dataset.a==='t');
+    paint();if(structureChanged){persist();if(!isOverlay)pushAll(true)}else save(b.dataset.a==='t');
   });
   list.addEventListener('input',e=>{
     if(!e.target.classList.contains('nm'))return;
@@ -360,9 +361,9 @@ if(!isOverlay){
   });
   $('add').addEventListener('click',()=>{
     const s={...clone(SLOT_DEFAULT),id:uid(),enabled:false,name:'Slot '+(cfg.slots.length+1),text:{header:'',title:'New title',subtitle:''}};
-    cfg.slots.push(s);cfg.sel=s.id;renderSlots();sync();paint();save();$('ttitle').focus();$('ttitle').select();
+    cfg.slots.push(s);cfg.sel=s.id;renderSlots();sync();paint();persist();pushAll(true);$('ttitle').focus();$('ttitle').select();
   });
-  $('reset').addEventListener('click',()=>{cfg=clone(DEF);renderSlots();sync();paint();save();});
+  $('reset').addEventListener('click',()=>{cfg=clone(DEF);renderSlots();sync();paint();persist();pushAll(true);});
   $('copy').addEventListener('click',async()=>{
     const url=liveUrl();push(true);
     const box=$('url');box.value=url;
@@ -384,8 +385,9 @@ if(!isOverlay){
   es.onmessage=ev=>{try{
     const m=JSON.parse(ev.data);if(m.event&&m.event!=='message')return;
     const n=JSON.parse(m.message),map=new Map(cfg.slots.map(s=>[s.id,s]));
+    if(n.snapshotAll)map.clear();
     n.slots.forEach(s=>map.set(s.id,s));
-    const nc=merge(DEF,n);nc.slots=[...map.values()];if(targetSlot&&map.has(targetSlot))nc.sel=targetSlot;cfg=nc;paint();
+    const nc=merge(DEF,n);delete nc.snapshotAll;nc.slots=[...map.values()];if(targetSlot&&map.has(targetSlot))nc.sel=targetSlot;cfg=nc;paint();
   }catch(e){}};
   addEventListener('resize',fit);
 }else{

@@ -115,7 +115,8 @@
       <button class="primary" id="copy">Copy selected slot URL</button>
     </div>
     <div class="panel-bar"><input type="text" id="url" readonly placeholder="Overlay URL appears here"></div>
-    <p style="color:var(--mut);font-size:12px">In OBS: add a <b>Browser</b> source with this URL. Size <b>1080 × 1920</b> for 9:16 (or 1920 × 1080 for 16:9). OBS updates live while this editor page stays open: edits and ▶/■ are sent through the free ntfy.sh relay. Keep the URL private, since it contains your secret room code. The background is transparent.</p>
+    <div class="panel-bar"><button id="copyAll">Copy combined widget URL</button></div>
+    <p style="color:var(--mut);font-size:12px">Enable the slots you want to show together, then copy the combined URL to use them in one OBS Browser source. Set the source size to <b>1080 × 1920</b> for 9:16 (or <b>1920 × 1080</b> for 16:9). Updates sync live through ntfy.sh while this editor stays open. Keep the URL private, since it contains your secret room code. The background is transparent.</p>
   </div>
 
   <div id="right">
@@ -174,6 +175,7 @@ const KEYS=['header','title','subtitle'];
 const QP=new URLSearchParams(location.search+'&'+location.hash.slice(1));
 const isOverlay=QP.has('overlay')||QP.has('room');
 const targetSlot=QP.get('slot');
+const allSlots=QP.get('all')==='1';
 if(isOverlay)document.documentElement.classList.add('ov');
 const $=id=>document.getElementById(id);
 
@@ -207,11 +209,13 @@ if(!isOverlay){try{ROOM=localStorage.getItem('lt-room')}catch(e){}
   if(!ROOM){ROOM=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{localStorage.setItem('lt-room',ROOM)}catch(e){}}}
 const NTFY=(room=ROOM)=>'https://ntfy.sh/ltov-'+room;
 const roomFor=s=>ROOM;
-const liveUrl=(s=cur())=>location.origin+location.pathname+'?overlay=1&room='+ROOM+'&slot='+encodeURIComponent(s.id);
+const liveUrl=(s=cur(),all=false)=>location.origin+location.pathname+'?overlay=1&room='+ROOM+(all?'&all=1&aspect='+encodeURIComponent(s.layout.aspect):'&slot='+encodeURIComponent(s.id));
 let busy=false,timer=null;const pending=new Map();
 const setLive=t=>{const e=document.getElementById('live');if(e)e.textContent=t};
 function pack(s=cur()){return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id,active:s.enabled?s.id:null}))}
-function push(now){const s=cur();if(!s)return;const room=roomFor(s);pending.set(s.id,{key:s.id,room,payload:pack(s)});clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
+function queueSlot(s){const room=roomFor(s);pending.set(s.id,{key:s.id,room,payload:pack(s)})}
+function push(now){const s=cur();if(!s)return;queueSlot(s);clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
+function pushAll(now){cfg.slots.forEach(queueSlot);clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
 async function flush(){
   if(busy||!pending.size)return;busy=true;clearTimeout(timer);const batch=[...pending.values()];pending.clear();let failed=false,error='';
   for(const item of batch){try{const r=await fetch(NTFY(item.room),{method:'POST',body:item.payload});if(!r.ok){failed=true;let detail='';try{detail=(await r.text()).slice(0,80)}catch(e){}error='HTTP '+r.status+(detail?': '+detail:'');if(!pending.has(item.key))pending.set(item.key,item)}}catch(e){failed=true;error=e.name==='TypeError'?'Network or CORS error':e.message;if(!pending.has(item.key))pending.set(item.key,item)}}
@@ -226,7 +230,7 @@ function setP(p,v){const[r,q]=ref(p),k=q.split('.');let o=r;while(k.length>1)o=o
 function shade(h){const m=/^#?([0-9a-f]{6})$/i.exec(h);if(!m)return h;const n=parseInt(m[1],16);const f=c=>Math.round(c*.9).toString(16).padStart(2,'0');return '#'+f(n>>16)+f((n>>8)&255)+f(n&255)}
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid=()=>'s'+Math.random().toString(36).slice(2,8);
-const dims=(s=cur())=>s?.layout?.aspect==='16:9'?[1920,1080]:[1080,1920];
+const dims=(s=cur())=>(isOverlay&&allSlots?(QP.get('aspect')||s?.layout?.aspect):s?.layout?.aspect)==='16:9'?[1920,1080]:[1080,1920];
 
 /* stage */
 const canvas=document.createElement('div');canvas.id='canvas';
@@ -246,7 +250,7 @@ function paint(){
     if(isOverlay&&targetSlot&&s.id!==targetSlot)return;
     let n=canvas.querySelector('.lt[data-id="'+s.id+'"]');const fresh=!n;
     if(!n){n=document.createElement('div');n.dataset.id=s.id;n.innerHTML='<i class="bar"></i><div class="header"><b></b></div><div class="title"><b></b></div><div class="subtitle"><b></b></div>';canvas.appendChild(n)}
-    const cls='lt p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled)||(isOverlay&&targetSlot&&s.enabled))?' on':'');
+    const cls='lt p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled)||(isOverlay&&s.enabled&&(targetSlot||allSlots)))?' on':'');
     n.style.setProperty('--offset-x',(s.layout.x||0)+'px');n.style.setProperty('--offset-y',(s.layout.y||0)+'px');
     n.style.setProperty('--ac',s.colors.headerBase);
     KEYS.forEach(k=>{
@@ -348,11 +352,17 @@ if(!isOverlay){
     catch(e){box.select();$('copy').textContent='Select & copy below'}
     setTimeout(()=>$('copy').textContent='Copy selected slot URL',1800);
   });
+  $('copyAll').addEventListener('click',async()=>{
+    const url=liveUrl(cur(),true);pushAll(true);$('url').value=url;
+    try{await navigator.clipboard.writeText(url);$('copyAll').textContent='Copied!'}
+    catch(e){$('url').select();$('copyAll').textContent='Select & copy below'}
+    setTimeout(()=>$('copyAll').textContent='Copy combined widget URL',1800);
+  });
   new ResizeObserver(fit).observe(pv);
   renderSlots();sync();paint();$('url').value=liveUrl();push(true);
 }else if(ROOM){
   cfg.slots=[];cfg.active=null;paint();
-  const es=new EventSource(NTFY()+'/sse?since=latest');
+  const es=new EventSource(NTFY()+'/sse?since='+(allSlots?'all':'latest'));
   es.onmessage=ev=>{try{
     const m=JSON.parse(ev.data);if(m.event&&m.event!=='message')return;
     const n=JSON.parse(m.message),map=new Map(cfg.slots.map(s=>[s.id,s]));

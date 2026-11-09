@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lower Third Overlay</title>
-<link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Hanuman:wght@300;400;700&family=Kantumruy+Pro:wght@300;400;500;700&family=Koulen&family=Moul&family=Noto+Sans+Khmer:wght@300;400;500;700&family=Oswald:wght@300;400;500;700&family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;700&family=Montserrat:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Freehand&family=Google+Sans:wght@400..700&family=Hanuman:wght@300;400;700&family=Kantumruy+Pro:wght@300;400;500;700&family=Koulen&family=Moul&family=Noto+Sans+Khmer:wght@300;400;500;700&family=Montserrat:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{color-scheme:dark;--bg:#0f0b1a;--card:#1a1228;--card2:#241839;--line:#3a2a55;--txt:#e9e4f5;--mut:#a99fc0;--acc:#ff7a1a}
+  :root{color-scheme:light;--bg:#edf3f4;--card:#ffffff;--card2:#e5eff0;--line:#cbdadd;--txt:#172a33;--mut:#526a72;--acc:#087f8c}
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%}
   html:not(.ov){padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-  body{background:var(--bg);color:var(--txt);font:14px/1.4 'Poppins',system-ui,sans-serif}
+  body{background:var(--bg);color:var(--txt);font:14px/1.4 'Montserrat',system-ui,sans-serif}
 
   html.ov{background:transparent;color-scheme:normal}
   /* ---------- overlay output (OBS) ---------- */
@@ -24,7 +24,7 @@
   #left{position:sticky;top:16px}
   @media(max-width:860px){#left{position:static}}
   #preview{position:relative;width:100%;max-width:340px;margin:0 auto;border:1px solid var(--line);border-radius:10px;overflow:hidden;
-    background:radial-gradient(circle at 20% 15%,#ff8a3d 0,transparent 40%),radial-gradient(circle at 85% 45%,#4c6bff 0,transparent 45%),radial-gradient(circle at 25% 85%,#c43bff 0,transparent 45%),#1b1030}
+    background:radial-gradient(circle at 18% 12%,#246b73 0,transparent 42%),radial-gradient(circle at 88% 82%,#243c66 0,transparent 46%),#101923}
   #preview.land{max-width:none}
   #canvas{position:absolute;left:0;top:0;transform-origin:0 0}
   .panel-bar{display:flex;align-items:center;justify-content:space-between;margin:12px 0 0;gap:8px}
@@ -34,18 +34,21 @@
   .body{padding:12px 14px;display:grid;gap:10px}
   .row{display:grid;grid-template-columns:110px 44px 1fr;gap:10px;align-items:center}
   .trow{display:grid;grid-template-columns:80px 1fr;gap:10px;align-items:center}
+  .offset-row{display:grid;grid-template-columns:80px 1fr 52px;gap:10px;align-items:center}
+  .offset-row input{width:100%;accent-color:var(--acc)}
+  .offset-row output{font-size:12px;color:var(--mut);text-align:right}
   .srow{display:grid;grid-template-columns:80px 1fr 124px 36px 64px auto;gap:8px;align-items:center}
   @media(max-width:620px){.srow{grid-template-columns:1fr 1fr}.srow label:first-child{grid-column:1/-1}}
   label{color:var(--mut);font-size:12px}
-  input[type=text],input[type=number],select{width:100%;background:#150e22;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}
+  input[type=text],input[type=number],select{width:100%;background:#f8fbfb;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}
   input[type=color]{width:44px;height:34px;padding:0;border:1px solid var(--line);border-radius:6px;background:none}
-  button{background:#150e22;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit;cursor:pointer}
+  button{background:#f8fbfb;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit;cursor:pointer}
   button.on{background:var(--acc);border-color:var(--acc);color:#fff}
   button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
   .primary{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;padding:9px 14px}
   .sw{position:relative;width:52px;height:28px;display:inline-block}
   .sw input{opacity:0;width:0;height:0}
-  .sw span{position:absolute;inset:0;background:#3a2a55;border-radius:6px;transition:.2s;cursor:pointer}
+  .sw span{position:absolute;inset:0;background:#b8c9cd;border-radius:6px;transition:.2s;cursor:pointer}
   .sw span:before{content:"";position:absolute;width:12px;height:18px;left:5px;top:5px;background:#fff;border-radius:4px;transition:.2s}
   .sw input:checked+span{background:var(--acc)}
   .sw input:checked+span:before{transform:translateX(30px)}
@@ -53,10 +56,10 @@
   #url{font-size:12px}
 
   /* ---------- slots ---------- */
-  .slot{position:relative;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:#150e22}
-  .slot.sel{border-color:#8b5cf6;box-shadow:0 0 0 1px #8b5cf6 inset}
+  .slot{position:relative;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:#f8fbfb}
+  .slot.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
   .slot .nm{flex:1;min-width:0;background:transparent;border-color:transparent;font-weight:600}
-  .slot .nm:focus{background:#241839;border-color:#6b3fb0}
+  .slot .nm:focus{background:#fff;border-color:var(--acc)}
   .ic{background:none;border:0;color:var(--mut);padding:6px 8px}
   .ic:hover{color:var(--txt)}
   .play{width:32px;height:32px;display:grid;place-items:center;color:var(--acc);padding:0}
@@ -64,10 +67,10 @@
   .tri{width:0;height:0;border-left:13px solid currentColor;border-top:8px solid transparent;border-bottom:8px solid transparent}
   .sq{display:none;width:12px;height:12px;border-radius:2px;background:var(--acc)}
   .play.on .tri{display:none}.play.on .sq{display:block}
-  .menu{display:none;position:absolute;right:8px;top:100%;z-index:5;background:#241839;border:1px solid var(--line);border-radius:8px;padding:4px;margin-top:4px}
+  .menu{display:none;position:absolute;right:8px;top:100%;z-index:5;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px;margin-top:4px;box-shadow:0 8px 24px #172a331c}
   .menu.open{display:block}
   .menu button{display:block;width:100%;text-align:left;border:0;background:none}
-  .menu button:hover{background:#ffffff14}
+  .menu button:hover{background:#e5eff0}
   #slots{display:grid;gap:8px}
 
   /* ---------- lower third ---------- */
@@ -86,7 +89,7 @@
   .lt.on div::before{transform:translateX(120%);transition:transform .8s ease .55s}
   .bar{position:absolute;left:-18px;top:0;bottom:0;width:8px;border-radius:3px;background:var(--ac);transform:scaleY(0);transform-origin:bottom;transition:transform .35s cubic-bezier(.6,0,.4,1) .45s}
   .lt.on .bar{transform:scaleY(1);transition-delay:0s}
-  .p-bottom-right .bar{left:auto;right:-18px}
+  .p-bottom-right .bar,.p-top-right .bar{left:auto;right:-18px}
   .p-center .bar{display:none}
   /* liquid glass */
   .lt div.glass{background:linear-gradient(135deg,rgba(255,255,255,.34),rgba(255,255,255,.07) 55%,rgba(255,255,255,.2)),color-mix(in srgb,var(--base) 40%,transparent);
@@ -94,11 +97,13 @@
     border:1px solid rgba(255,255,255,.4);text-shadow:0 1px 6px rgba(0,0,0,.3);
     box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),inset 0 -1.5px 1px rgba(255,255,255,.15),inset 0 0 14px rgba(255,255,255,.12),0 8px 22px rgba(10,0,30,.3)}
   @media(prefers-reduced-motion:reduce){.lt div,.lt b,.bar{transition-duration:.01s!important;transition-delay:0s!important}.lt div::before{display:none}}
-  .p-bottom-left{left:7%;bottom:12%}
-  .p-bottom-center{left:50%;bottom:12%;transform:translateX(-50%);align-items:center}
-  .p-bottom-right{right:7%;bottom:12%;align-items:flex-end}
-  .p-top-left{left:7%;top:8%}
-  .p-center{left:50%;top:50%;transform:translate(-50%,-50%);align-items:center}
+  .p-bottom-left{left:calc(7% + var(--offset-x,0px));bottom:calc(12% - var(--offset-y,0px))}
+  .p-bottom-center{left:calc(50% + var(--offset-x,0px));bottom:calc(12% - var(--offset-y,0px));transform:translateX(-50%);align-items:center}
+  .p-bottom-right{right:calc(7% - var(--offset-x,0px));bottom:calc(12% - var(--offset-y,0px));align-items:flex-end}
+  .p-top-left{left:calc(7% + var(--offset-x,0px));top:calc(8% + var(--offset-y,0px))}
+  .p-top-center{left:calc(50% + var(--offset-x,0px));top:calc(8% + var(--offset-y,0px));transform:translateX(-50%);align-items:center}
+  .p-top-right{right:calc(7% - var(--offset-x,0px));top:calc(8% + var(--offset-y,0px));align-items:flex-end}
+  .p-center{left:calc(50% + var(--offset-x,0px));top:calc(50% + var(--offset-y,0px));transform:translate(-50%,-50%);align-items:center}
 </style>
 </head>
 <body>
@@ -107,7 +112,7 @@
     <div id="preview"></div>
     <div class="panel-bar">
       <span id="live" style="color:var(--mut);font-size:12px">Preview</span>
-      <button class="primary" id="copy">Copy overlay URL</button>
+      <button class="primary" id="copy">Copy selected slot URL</button>
     </div>
     <div class="panel-bar"><input type="text" id="url" readonly placeholder="Overlay URL appears here"></div>
     <p style="color:var(--mut);font-size:12px">In OBS: add a <b>Browser</b> source with this URL. Size <b>1080 × 1920</b> for 9:16 (or 1920 × 1080 for 16:9). OBS updates live while this editor page stays open: edits and ▶/■ are sent through the free ntfy.sh relay. Keep the URL private, since it contains your secret room code. The background is transparent.</p>
@@ -115,6 +120,7 @@
 
   <div id="right">
     <div class="card"><h3>Slots</h3><div class="body">
+      <small style="color:var(--mut)">Each slot has its own settings and overlay URL. Turn on multiple slots to run multiple widgets.</small>
       <div id="slots"></div>
       <button id="add" type="button">+ Add Slot</button>
     </div></div>
@@ -126,38 +132,43 @@
     </div></div>
 
     <div class="card"><h3>Color Palette</h3><div class="body" id="colors"></div></div>
+    <div class="card"><h3>Base Corner Radius</h3><div class="body" id="radii"></div></div>
     <div class="card"><h3>Style</h3><div class="body" id="styles"></div></div>
 
     <div class="card"><h3>Layout</h3><div class="body">
       <div class="trow"><label>Preview</label>
-        <select data-p="aspect"><option value="9:16">9:16 (iPhone)</option><option value="16:9">16:9</option></select></div>
+        <select data-p="layout.aspect"><option value="9:16">9:16</option><option value="16:9">16:9</option></select></div>
       <div class="trow"><label>Position</label>
-        <select data-p="pos">
-          <option value="bottom-left">Bottom left</option><option value="bottom-center">Bottom center</option>
-          <option value="bottom-right">Bottom right</option><option value="top-left">Top left</option>
-          <option value="center">Center</option>
+        <select data-p="layout.pos">
+          <optgroup label="Top">
+            <option value="top-left">Top left</option><option value="top-center">Top center</option>
+            <option value="top-right">Top right</option>
+          </optgroup>
+          <optgroup label="Center"><option value="center">Center</option></optgroup>
+          <optgroup label="Bottom">
+            <option value="bottom-left">Bottom left</option><option value="bottom-center">Bottom center</option>
+            <option value="bottom-right">Bottom right</option>
+          </optgroup>
         </select></div>
-      <div class="trow"><label>Gradient</label><label class="sw"><input type="checkbox" data-p="gradient"><span></span></label></div>
+      <div class="offset-row"><label for="offset-x">Horizontal</label><input id="offset-x" type="range" min="-600" max="600" step="1" data-p="layout.x"><output data-value="layout.x">0 px</output></div>
+      <div class="offset-row"><label for="offset-y">Vertical</label><input id="offset-y" type="range" min="-600" max="600" step="1" data-p="layout.y"><output data-value="layout.y">0 px</output></div>
+      <div class="trow"><label>Gradient</label><label class="sw"><input type="checkbox" data-p="layout.gradient"><span></span></label></div>
     </div></div>
     <button id="reset">Reset to defaults</button>
   </div>
 </div>
 
 <script>
-const FONTS=['Hanuman','Battambang','Kantumruy Pro','Noto Sans Khmer','Moul','Koulen','Oswald','Roboto','Poppins','Montserrat'];
+const FONTS=['Hanuman','Battambang','Kantumruy Pro','Noto Sans Khmer','Moul','Koulen','Montserrat','Freehand','Google Sans'];
 const WEIGHTS=[['300','300 Light'],['400','400 Regular'],['500','500 Medium'],['700','700 Bold']];
 const DEF={
-  slots:[{id:'s1',name:'Slot 1',text:{header:'',title:'បងៗនៅខេត្ត សូមជួយវេរលុយមុន',subtitle:''}}],
-  sel:'s1',active:null,
-  colors:{header:'#ffffff',headerBase:'#ff0000',title:'#0000ff',titleBase:'#ffffff',subtitle:'#111111',subtitleBase:'#ffffff'},
-  style:{
-    header:{f:'Hanuman',w:'400',i:false,s:34},
-    title:{f:'Hanuman',w:'400',i:false,s:56},
-    subtitle:{f:'Hanuman',w:'400',i:false,s:38}
-  },
-  glass:{header:false,title:false,subtitle:false},
-  gradient:true,pos:'bottom-left',aspect:'9:16'
+  slots:[{id:'s1',name:'Slot 1',text:{header:'',title:'បងៗនៅខេត្ត សូមជួយវេរលុយមុន',subtitle:''},
+    colors:{header:'#ffffff',headerBase:'#ff0000',title:'#0000ff',titleBase:'#ffffff',subtitle:'#111111',subtitleBase:'#ffffff'},
+    style:{header:{f:'Hanuman',w:'400',i:false,s:34},title:{f:'Hanuman',w:'400',i:false,s:56},subtitle:{f:'Hanuman',w:'400',i:false,s:38}},
+    glass:{header:false,title:false,subtitle:false},radius:{header:10,title:10,subtitle:10},layout:{gradient:true,pos:'bottom-left',aspect:'9:16',x:0,y:0},enabled:false}],
+  sel:'s1',active:null
 };
+const SLOT_DEFAULT=DEF.slots[0];
 const COLOR_LABELS=[['header','Header'],['headerBase','Header Base'],['title','Title'],['titleBase','Title Base'],['subtitle','Subtitle'],['subtitleBase','Subtitle Base']];
 const KEYS=['header','title','subtitle'];
 const QP=new URLSearchParams(location.search+'&'+location.hash.slice(1));
@@ -167,7 +178,17 @@ const $=id=>document.getElementById(id);
 
 function merge(a,b){const o=Array.isArray(a)?[...a]:{...a};for(const k in b)o[k]=(b[k]&&typeof b[k]==='object'&&a[k]&&typeof a[k]==='object')?merge(a[k],b[k]):b[k];return o}
 function clone(x){return JSON.parse(JSON.stringify(x))}
-function migrate(o){if(o&&o.text){o.slots=[{id:'s1',name:'Slot 1',text:o.text}];o.sel='s1';delete o.text}return o}
+function migrate(o){
+  if(o&&o.text){o.slots=[{id:'s1',name:'Slot 1',text:o.text}];o.sel='s1'}
+  if(!o||!Array.isArray(o.slots))return o;
+  o.slots=o.slots.map(s=>{
+    const hasPerSlot=!!(s.style||s.colors||s.glass||s.radius||s.layout);
+    const base=clone(SLOT_DEFAULT);
+    if(!hasPerSlot){base.colors=o.colors||base.colors;base.style=o.style||base.style;base.glass=o.glass||base.glass;base.layout={gradient:o.gradient??base.layout.gradient,pos:o.pos||base.layout.pos,aspect:o.aspect||base.layout.aspect,x:0,y:0}}
+    return merge(merge(base,s),{layout:merge(base.layout,s.layout||{}),enabled:s.enabled??(o.active===s.id)});
+  });
+  return o;
+}
 function load(){
   try{const p=QP.get('overlay');if(p)return merge(DEF,migrate(JSON.parse(decodeURIComponent(escape(atob(p))))))}catch(e){}
   if(!isOverlay){try{const s=localStorage.getItem('lt-cfg');if(s)return merge(DEF,migrate(JSON.parse(s)))}catch(e){}}
@@ -183,27 +204,31 @@ function save(now){try{localStorage.setItem('lt-cfg',JSON.stringify(cfg))}catch(
 let ROOM=QP.get('room');
 if(!isOverlay){try{ROOM=localStorage.getItem('lt-room')}catch(e){}
   if(!ROOM){ROOM=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{localStorage.setItem('lt-room',ROOM)}catch(e){}}}
-const NTFY=()=>'https://ntfy.sh/ltov-'+ROOM;
-const liveUrl=()=>location.origin+location.pathname+'?overlay=1&room='+ROOM;
-let dirty=false,busy=false,timer=null;
+const NTFY=(room=ROOM)=>'https://ntfy.sh/ltov-'+room;
+const newRoom=()=>Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');
+cfg.slots.forEach((s,i)=>{if(!s.room)s.room=i===0?ROOM:newRoom()});
+if(!isOverlay){try{localStorage.setItem('lt-cfg',JSON.stringify(cfg))}catch(e){}}
+const roomFor=s=>s.room||ROOM;
+const liveUrl=(s=cur())=>location.origin+location.pathname+'?overlay=1&room='+roomFor(s);
+let busy=false,timer=null;const pending=new Map();
 const setLive=t=>{const e=document.getElementById('live');if(e)e.textContent=t};
-function pack(){const s=cfg.slots.find(x=>x.id===(cfg.active||cfg.sel))||cfg.slots[0];return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id}))}
-function push(now){dirty=true;clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
+function pack(s=cur()){return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id,active:s.enabled?s.id:null}))}
+function push(now){const s=cur();if(!s)return;const room=roomFor(s);pending.set(room,{room,payload:pack(s)});clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
 async function flush(){
-  if(busy||!dirty)return;busy=true;dirty=false;let ok=true;
-  try{ok=(await fetch(NTFY(),{method:'POST',body:pack()})).ok}catch(e){ok=false}
+  if(busy||!pending.size)return;busy=true;clearTimeout(timer);const batch=[...pending.values()];pending.clear();let failed=false;
+  for(const item of batch){try{const r=await fetch(NTFY(item.room),{method:'POST',body:item.payload});if(!r.ok){failed=true;if(!pending.has(item.room))pending.set(item.room,item)}}catch(e){failed=true;if(!pending.has(item.room))pending.set(item.room,item)}}
   busy=false;
-  if(!ok){dirty=true;setLive('○ Live: retrying…');setTimeout(flush,5000)}
-  else{setLive('● Live: synced');if(dirty)push()}
+  if(failed){setLive('○ Live: retrying…');clearTimeout(timer);timer=setTimeout(flush,5000)}
+  else{setLive('● Live: synced');if(pending.size){clearTimeout(timer);timer=setTimeout(flush,0)}}
 }
 const cur=()=>cfg.slots.find(s=>s.id===cfg.sel);
-function ref(p){return p.startsWith('slot.')?[cur(),p.slice(5)]:[cfg,p]}
+function ref(p){if(p.startsWith('slot.'))return[cur(),p.slice(5)];if(['colors.','style.','glass.','radius.','layout.'].some(x=>p.startsWith(x)))return[cur(),p];return[cfg,p]}
 function getP(p){const[r,q]=ref(p);return q.split('.').reduce((o,k)=>o[k],r)}
 function setP(p,v){const[r,q]=ref(p),k=q.split('.');let o=r;while(k.length>1)o=o[k.shift()];o[k[0]]=v}
 function shade(h){const m=/^#?([0-9a-f]{6})$/i.exec(h);if(!m)return h;const n=parseInt(m[1],16);const f=c=>Math.round(c*.9).toString(16).padStart(2,'0');return '#'+f(n>>16)+f((n>>8)&255)+f(n&255)}
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid=()=>'s'+Math.random().toString(36).slice(2,8);
-const dims=()=>cfg.aspect==='16:9'?[1920,1080]:[1080,1920];
+const dims=(s=cur())=>s?.layout?.aspect==='16:9'?[1920,1080]:[1080,1920];
 
 /* stage */
 const canvas=document.createElement('div');canvas.id='canvas';
@@ -222,16 +247,18 @@ function paint(){
   cfg.slots.forEach(s=>{
     let n=canvas.querySelector('.lt[data-id="'+s.id+'"]');const fresh=!n;
     if(!n){n=document.createElement('div');n.dataset.id=s.id;n.innerHTML='<i class="bar"></i><div class="header"><b></b></div><div class="title"><b></b></div><div class="subtitle"><b></b></div>';canvas.appendChild(n)}
-    const cls='lt p-'+cfg.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+(cfg.active===s.id?' on':'');
-    n.style.setProperty('--ac',cfg.colors.headerBase);
+    const cls='lt p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled))?' on':'');
+    n.style.setProperty('--offset-x',(s.layout.x||0)+'px');n.style.setProperty('--offset-y',(s.layout.y||0)+'px');
+    n.style.setProperty('--ac',s.colors.headerBase);
     KEYS.forEach(k=>{
-      const d=n.querySelector('.'+k),v=s.text[k]||'',st=cfg.style[k],base=cfg.colors[k+'Base'],g=cfg.glass[k];
+      const d=n.querySelector('.'+k),v=s.text[k]||'',st=s.style[k],base=s.colors[k+'Base'],g=s.glass[k];
       d.firstChild.textContent=v;d.style.display=v.trim()?'':'none';
-      d.style.color=cfg.colors[k];
+      d.style.color=s.colors[k];
       d.style.fontFamily="'"+st.f+"',sans-serif";
       d.style.fontWeight=st.w;d.style.fontStyle=st.i?'italic':'normal';d.style.fontSize=st.s+'px';
+      d.style.borderRadius=(s.radius[k]??10)+'px';
       d.style.setProperty('--base',base);d.classList.toggle('glass',!!g);
-      d.style.background=g?'':(cfg.gradient?'linear-gradient('+base+','+shade(base)+')':base);
+      d.style.background=g?'':(s.layout.gradient?'linear-gradient('+base+','+shade(base)+')':base);
     });
   });
   fit();
@@ -240,6 +267,8 @@ function paint(){
 if(!isOverlay){
   document.getElementById('colors').innerHTML=COLOR_LABELS.map(([k,l])=>
     `<div class="row"><label>${l}</label><input type="color" data-p="colors.${k}"><input type="text" data-p="colors.${k}"></div>`).join('');
+  document.getElementById('radii').innerHTML=KEYS.map(k=>
+    `<div class="offset-row"><label>${k[0].toUpperCase()+k.slice(1)}</label><input type="range" min="0" max="48" step="1" data-p="radius.${k}"><output data-value="radius.${k}">10 px</output></div>`).join('');
   document.getElementById('styles').innerHTML=KEYS.map(k=>
     `<div class="srow"><label>${k[0].toUpperCase()+k.slice(1)}</label>
       <select data-p="style.${k}.f">${FONTS.map(f=>`<option>${f}</option>`).join('')}</select>
@@ -257,22 +286,24 @@ if(!isOverlay){
       else if(el.type==='color'){if(/^#[0-9a-f]{6}$/i.test(v))el.value=v}
       else el.value=v;
     });
-    document.querySelectorAll('[data-i]').forEach(b=>b.classList.toggle('on',cfg.style[b.dataset.i].i));
+    document.querySelectorAll('[data-value]').forEach(el=>el.textContent=(getP(el.dataset.value)||0)+' px');
+    document.querySelectorAll('[data-i]').forEach(b=>b.classList.toggle('on',cur().style[b.dataset.i].i));
     $('tn').textContent=cur().name;
+    $('url').value=liveUrl(cur());
   }
   fields.forEach(el=>el.addEventListener('input',()=>{
-    let v=el.type==='checkbox'?el.checked:el.type==='number'?(+el.value||0):el.value;
+    let v=el.type==='checkbox'?el.checked:(el.type==='number'||el.type==='range')?(+el.value||0):el.value;
     setP(el.dataset.p,v);sync(el);paint();save();
   }));
   document.querySelectorAll('[data-i]').forEach(b=>b.addEventListener('click',()=>{
-    const s=cfg.style[b.dataset.i];s.i=!s.i;sync();paint();save();
+    const s=cur().style[b.dataset.i];s.i=!s.i;sync();paint();save();
   }));
 
   /* slots */
   const list=$('slots');
   function renderSlots(){
     list.innerHTML=cfg.slots.map(s=>`<div class="slot${s.id===cfg.sel?' sel':''}" data-id="${s.id}">
-      <button class="ic play${cfg.active===s.id?' on':''}" data-a="t" aria-label="Turn ON/OFF"><span class="tri"></span><span class="sq"></span></button>
+      <button class="ic play${s.enabled?' on':''}" data-a="t" aria-label="Turn ON/OFF"><span class="tri"></span><span class="sq"></span></button>
       <input type="text" class="nm" value="${esc(s.name)}" aria-label="Slot name">
       <button class="ic" data-a="e" title="Edit text" aria-label="Edit text">✎</button>
       <button class="ic" data-a="m" aria-label="More">⋮</button>
@@ -291,10 +322,10 @@ if(!isOverlay){
     if(!b)return;
     const i=cfg.slots.findIndex(s=>s.id===id);
     switch(b.dataset.a){
-      case 't':cfg.active=cfg.active===id?null:id;list.querySelectorAll('.play').forEach(p=>p.classList.toggle('on',p.closest('.slot').dataset.id===cfg.active));break;
+      case 't':{const s=cfg.slots[i];s.enabled=!s.enabled;b.classList.toggle('on',s.enabled);break}
       case 'e':$('ttitle').focus();break;
       case 'm':row.querySelector('.menu').classList.toggle('open');return;
-      case 'd':{const c=clone(cfg.slots[i]);c.id=uid();c.name+=' copy';cfg.slots.splice(i+1,0,c);cfg.sel=c.id;renderSlots();sync();break}
+      case 'd':{const c=clone(cfg.slots[i]);c.id=uid();c.room=newRoom();c.enabled=false;c.name+=' copy';cfg.slots.splice(i+1,0,c);cfg.sel=c.id;renderSlots();sync();break}
       case 'u':if(i>0){cfg.slots.splice(i-1,0,cfg.slots.splice(i,1)[0]);renderSlots()}break;
       case 'w':if(i<cfg.slots.length-1){cfg.slots.splice(i+1,0,cfg.slots.splice(i,1)[0]);renderSlots()}break;
       case 'x':if(cfg.slots.length>1){cfg.slots.splice(i,1);if(cfg.active===id)cfg.active=null;if(cfg.sel===id)cfg.sel=cfg.slots[Math.max(0,i-1)].id;renderSlots();sync()}break;
@@ -307,7 +338,7 @@ if(!isOverlay){
     if(s.id===cfg.sel)$('tn').textContent=s.name;save();
   });
   $('add').addEventListener('click',()=>{
-    const s={id:uid(),name:'Slot '+(cfg.slots.length+1),text:{header:'',title:'New title',subtitle:''}};
+    const s={...clone(SLOT_DEFAULT),id:uid(),room:newRoom(),enabled:false,name:'Slot '+(cfg.slots.length+1),text:{header:'',title:'New title',subtitle:''}};
     cfg.slots.push(s);cfg.sel=s.id;renderSlots();sync();paint();save();$('ttitle').focus();$('ttitle').select();
   });
   $('reset').addEventListener('click',()=>{cfg=clone(DEF);renderSlots();sync();paint();save();});
@@ -316,7 +347,7 @@ if(!isOverlay){
     const box=$('url');box.value=url;
     try{await navigator.clipboard.writeText(url);$('copy').textContent='Copied!'}
     catch(e){box.select();$('copy').textContent='Select & copy below'}
-    setTimeout(()=>$('copy').textContent='Copy overlay URL',1800);
+    setTimeout(()=>$('copy').textContent='Copy selected slot URL',1800);
   });
   new ResizeObserver(fit).observe(pv);
   renderSlots();sync();paint();$('url').value=liveUrl();push(true);

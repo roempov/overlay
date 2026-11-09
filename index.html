@@ -173,6 +173,7 @@ const COLOR_LABELS=[['header','Header'],['headerBase','Header Base'],['title','T
 const KEYS=['header','title','subtitle'];
 const QP=new URLSearchParams(location.search+'&'+location.hash.slice(1));
 const isOverlay=QP.has('overlay')||QP.has('room');
+const targetSlot=QP.get('slot');
 if(isOverlay)document.documentElement.classList.add('ov');
 const $=id=>document.getElementById(id);
 
@@ -205,18 +206,15 @@ let ROOM=QP.get('room');
 if(!isOverlay){try{ROOM=localStorage.getItem('lt-room')}catch(e){}
   if(!ROOM){ROOM=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');try{localStorage.setItem('lt-room',ROOM)}catch(e){}}}
 const NTFY=(room=ROOM)=>'https://ntfy.sh/ltov-'+room;
-const newRoom=()=>Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');
-cfg.slots.forEach((s,i)=>{if(!s.room)s.room=i===0?ROOM:newRoom()});
-if(!isOverlay){try{localStorage.setItem('lt-cfg',JSON.stringify(cfg))}catch(e){}}
-const roomFor=s=>s.room||ROOM;
-const liveUrl=(s=cur())=>location.origin+location.pathname+'?overlay=1&room='+roomFor(s);
+const roomFor=s=>ROOM;
+const liveUrl=(s=cur())=>location.origin+location.pathname+'?overlay=1&room='+ROOM+'&slot='+encodeURIComponent(s.id);
 let busy=false,timer=null;const pending=new Map();
 const setLive=t=>{const e=document.getElementById('live');if(e)e.textContent=t};
 function pack(s=cur()){return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id,active:s.enabled?s.id:null}))}
-function push(now){const s=cur();if(!s)return;const room=roomFor(s);pending.set(room,{room,payload:pack(s)});clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
+function push(now){const s=cur();if(!s)return;const room=roomFor(s);pending.set(s.id,{key:s.id,room,payload:pack(s)});clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
 async function flush(){
   if(busy||!pending.size)return;busy=true;clearTimeout(timer);const batch=[...pending.values()];pending.clear();let failed=false,error='';
-  for(const item of batch){try{const r=await fetch(NTFY(item.room),{method:'POST',body:item.payload});if(!r.ok){failed=true;let detail='';try{detail=(await r.text()).slice(0,80)}catch(e){}error='HTTP '+r.status+(detail?': '+detail:'');if(!pending.has(item.room))pending.set(item.room,item)}}catch(e){failed=true;error=e.name==='TypeError'?'Network or CORS error':e.message;if(!pending.has(item.room))pending.set(item.room,item)}}
+  for(const item of batch){try{const r=await fetch(NTFY(item.room),{method:'POST',body:item.payload});if(!r.ok){failed=true;let detail='';try{detail=(await r.text()).slice(0,80)}catch(e){}error='HTTP '+r.status+(detail?': '+detail:'');if(!pending.has(item.key))pending.set(item.key,item)}}catch(e){failed=true;error=e.name==='TypeError'?'Network or CORS error':e.message;if(!pending.has(item.key))pending.set(item.key,item)}}
   busy=false;
   if(failed){setLive('○ Live: '+error+'; retrying…');clearTimeout(timer);timer=setTimeout(flush,5000)}
   else{setLive('● Live: synced');if(pending.size){clearTimeout(timer);timer=setTimeout(flush,0)}}
@@ -245,9 +243,10 @@ function paint(){
   const[W,H]=dims();canvas.style.width=W+'px';canvas.style.height=H+'px';
   [...canvas.querySelectorAll('.lt')].forEach(n=>{if(!cfg.slots.some(s=>s.id===n.dataset.id))n.remove()});
   cfg.slots.forEach(s=>{
+    if(isOverlay&&targetSlot&&s.id!==targetSlot)return;
     let n=canvas.querySelector('.lt[data-id="'+s.id+'"]');const fresh=!n;
     if(!n){n=document.createElement('div');n.dataset.id=s.id;n.innerHTML='<i class="bar"></i><div class="header"><b></b></div><div class="title"><b></b></div><div class="subtitle"><b></b></div>';canvas.appendChild(n)}
-    const cls='lt p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled))?' on':'');
+    const cls='lt p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled)||(isOverlay&&targetSlot&&s.enabled))?' on':'');
     n.style.setProperty('--offset-x',(s.layout.x||0)+'px');n.style.setProperty('--offset-y',(s.layout.y||0)+'px');
     n.style.setProperty('--ac',s.colors.headerBase);
     KEYS.forEach(k=>{
@@ -325,7 +324,7 @@ if(!isOverlay){
       case 't':{const s=cfg.slots[i];s.enabled=!s.enabled;b.classList.toggle('on',s.enabled);break}
       case 'e':$('ttitle').focus();break;
       case 'm':row.querySelector('.menu').classList.toggle('open');return;
-      case 'd':{const c=clone(cfg.slots[i]);c.id=uid();c.room=newRoom();c.enabled=false;c.name+=' copy';cfg.slots.splice(i+1,0,c);cfg.sel=c.id;renderSlots();sync();break}
+      case 'd':{const c=clone(cfg.slots[i]);c.id=uid();delete c.room;c.enabled=false;c.name+=' copy';cfg.slots.splice(i+1,0,c);cfg.sel=c.id;renderSlots();sync();break}
       case 'u':if(i>0){cfg.slots.splice(i-1,0,cfg.slots.splice(i,1)[0]);renderSlots()}break;
       case 'w':if(i<cfg.slots.length-1){cfg.slots.splice(i+1,0,cfg.slots.splice(i,1)[0]);renderSlots()}break;
       case 'x':if(cfg.slots.length>1){cfg.slots.splice(i,1);if(cfg.active===id)cfg.active=null;if(cfg.sel===id)cfg.sel=cfg.slots[Math.max(0,i-1)].id;renderSlots();sync()}break;
@@ -338,7 +337,7 @@ if(!isOverlay){
     if(s.id===cfg.sel)$('tn').textContent=s.name;save();
   });
   $('add').addEventListener('click',()=>{
-    const s={...clone(SLOT_DEFAULT),id:uid(),room:newRoom(),enabled:false,name:'Slot '+(cfg.slots.length+1),text:{header:'',title:'New title',subtitle:''}};
+    const s={...clone(SLOT_DEFAULT),id:uid(),enabled:false,name:'Slot '+(cfg.slots.length+1),text:{header:'',title:'New title',subtitle:''}};
     cfg.slots.push(s);cfg.sel=s.id;renderSlots();sync();paint();save();$('ttitle').focus();$('ttitle').select();
   });
   $('reset').addEventListener('click',()=>{cfg=clone(DEF);renderSlots();sync();paint();save();});
@@ -358,7 +357,7 @@ if(!isOverlay){
     const m=JSON.parse(ev.data);if(m.event&&m.event!=='message')return;
     const n=JSON.parse(m.message),map=new Map(cfg.slots.map(s=>[s.id,s]));
     n.slots.forEach(s=>map.set(s.id,s));
-    const nc=merge(DEF,n);nc.slots=[...map.values()];cfg=nc;paint();
+    const nc=merge(DEF,n);nc.slots=[...map.values()];if(targetSlot&&map.has(targetSlot))nc.sel=targetSlot;cfg=nc;paint();
   }catch(e){}};
   addEventListener('resize',fit);
 }else{

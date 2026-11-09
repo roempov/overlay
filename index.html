@@ -205,7 +205,8 @@ if(!cfg.slots.length)cfg.slots=clone(DEF.slots);
 if(!cfg.slots.some(s=>s.id===cfg.sel))cfg.sel=cfg.slots[0].id;
 if(!isOverlay)cfg.active=null;
 else if(!cfg.slots.some(s=>s.id===cfg.active))cfg.active=cfg.slots[0].id;
-function save(now){try{localStorage.setItem('lt-cfg',JSON.stringify(cfg))}catch(e){}if(!isOverlay)push(now)}
+function persist(){try{localStorage.setItem('lt-cfg',JSON.stringify(cfg))}catch(e){}}
+function save(now){persist();if(!isOverlay)push(now)}
 /* ---- live sync editor -> OBS through ntfy.sh (static hosting has no server) ---- */
 let ROOM=QP.get('room');
 if(!isOverlay){try{ROOM=localStorage.getItem('lt-room')}catch(e){}
@@ -213,17 +214,27 @@ if(!isOverlay){try{ROOM=localStorage.getItem('lt-room')}catch(e){}
 const NTFY=(room=ROOM)=>'https://ntfy.sh/ltov-'+room;
 const roomFor=s=>ROOM;
 const liveUrl=(s=cur(),all=false)=>location.origin+location.pathname+'?overlay=1&room='+ROOM+(all?'&all=1&aspect='+encodeURIComponent(s.layout.aspect):'&slot='+encodeURIComponent(s.id));
-let busy=false,timer=null;const pending=new Map();
+let busy=false,timer=null;const pending=new Map(),lastSent=new Map();let lastAllSent='';
+let quotaBlockedUntil=0;try{quotaBlockedUntil=Number(localStorage.getItem('lt-ntfy-quota-reset'))||0}catch(e){}
+if(quotaBlockedUntil<=Date.now())quotaBlockedUntil=0;
 const setLive=t=>{const e=document.getElementById('live');if(e)e.textContent=t};
 function pack(s=cur()){return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id,active:s.enabled?s.id:null}))}
-function queueSlot(s){const room=roomFor(s);pending.set(s.id,{key:s.id,room,payload:pack(s)})}
-function push(now){const s=cur();if(!s)return;queueSlot(s);clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
-function pushAll(now){cfg.slots.forEach(queueSlot);clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
+function packAll(){return JSON.stringify(Object.assign({},cfg,{slots:cfg.slots,active:cur()?.enabled?cur().id:null}))}
+function queueSlot(s){const room=roomFor(s),payload=pack(s);if(lastSent.get(s.id)===payload&&!pending.has(s.id))return;pending.set(s.id,{key:s.id,room,payload})}
+function scheduleQuotaRetry(){
+  clearTimeout(timer);const wait=quotaBlockedUntil-Date.now();
+  if(wait<=0){quotaBlockedUntil=0;try{localStorage.removeItem('lt-ntfy-quota-reset')}catch(e){}flush();return}
+  timer=setTimeout(()=>{if(Date.now()>=quotaBlockedUntil){quotaBlockedUntil=0;try{localStorage.removeItem('lt-ntfy-quota-reset')}catch(e){}flush()}else scheduleQuotaRetry()},Math.min(wait,2147480000));
+}
+function schedulePush(now){if(quotaBlockedUntil>Date.now()){setLive('○ Live: daily message quota reached; waiting for reset');scheduleQuotaRetry();return}clearTimeout(timer);timer=setTimeout(flush,now?0:1200)}
+function push(now){const s=cur();if(!s)return;queueSlot(s);schedulePush(now)}
+function pushAll(now){const payload=packAll();if(lastAllSent===payload&&!pending.size)return;pending.clear();pending.set('all',{key:'all',room:ROOM,payload});schedulePush(now)}
 async function flush(){
-  if(busy||!pending.size)return;busy=true;clearTimeout(timer);const batch=[...pending.values()];pending.clear();let failed=false,error='';
-  for(const item of batch){try{const r=await fetch(NTFY(item.room),{method:'POST',body:item.payload});if(!r.ok){failed=true;let detail='';try{detail=(await r.text()).slice(0,80)}catch(e){}error='HTTP '+r.status+(detail?': '+detail:'');if(!pending.has(item.key))pending.set(item.key,item)}}catch(e){failed=true;error=e.name==='TypeError'?'Network or CORS error':e.message;if(!pending.has(item.key))pending.set(item.key,item)}}
+  if(busy||!pending.size||quotaBlockedUntil>Date.now())return;busy=true;clearTimeout(timer);const batch=[...pending.values()];pending.clear();let failed=false,error='',quotaHit=false;
+  for(let i=0;i<batch.length;i++){const item=batch[i];try{const r=await fetch(NTFY(item.room),{method:'POST',body:item.payload});if(!r.ok){failed=true;let detail='';try{detail=(await r.text()).slice(0,100)}catch(e){}error='HTTP '+r.status+(detail?': '+detail:'');if(!pending.has(item.key))pending.set(item.key,item);if(r.status===429&&(/42908|daily message quota/i.test(detail))){const retry=Number(r.headers.get('Retry-After'));quotaBlockedUntil=Date.now()+(retry>0?retry*1000:86400000);try{localStorage.setItem('lt-ntfy-quota-reset',String(quotaBlockedUntil))}catch(e){}for(let j=i+1;j<batch.length;j++)if(!pending.has(batch[j].key))pending.set(batch[j].key,batch[j]);quotaHit=true;break}}else if(item.key==='all'){lastAllSent=item.payload;cfg.slots.forEach(s=>{if(!pending.has(s.id))lastSent.set(s.id,pack(s))})}else lastSent.set(item.key,item.payload)}catch(e){failed=true;error=e.name==='TypeError'?'Network or CORS error':e.message;if(!pending.has(item.key))pending.set(item.key,item)}}
   busy=false;
-  if(failed){setLive('○ Live: '+error+'; retrying…');clearTimeout(timer);timer=setTimeout(flush,5000)}
+  if(quotaHit){setLive('○ Live: daily message quota reached; waiting for reset');scheduleQuotaRetry()}
+  else if(failed){setLive('○ Live: '+error+'; retrying…');clearTimeout(timer);timer=setTimeout(flush,5000)}
   else{setLive('● Live: synced');if(pending.size){clearTimeout(timer);timer=setTimeout(flush,0)}}
 }
 const cur=()=>cfg.slots.find(s=>s.id===cfg.sel);
@@ -322,7 +333,7 @@ if(!isOverlay){
   function select(id){
     if(cfg.sel===id)return;cfg.sel=id;
     list.querySelectorAll('.slot').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));
-    sync();save();
+    sync();persist();
   }
   list.addEventListener('click',e=>{
     const b=e.target.closest('[data-a]'),row=e.target.closest('.slot');

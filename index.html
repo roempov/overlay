@@ -215,10 +215,10 @@ const setLive=t=>{const e=document.getElementById('live');if(e)e.textContent=t};
 function pack(s=cur()){return JSON.stringify(Object.assign({},cfg,{slots:[s],sel:s.id,active:s.enabled?s.id:null}))}
 function push(now){const s=cur();if(!s)return;const room=roomFor(s);pending.set(room,{room,payload:pack(s)});clearTimeout(timer);timer=setTimeout(flush,now?0:600)}
 async function flush(){
-  if(busy||!pending.size)return;busy=true;clearTimeout(timer);const batch=[...pending.values()];pending.clear();let failed=false;
-  for(const item of batch){try{const r=await fetch(NTFY(item.room),{method:'POST',body:item.payload});if(!r.ok){failed=true;if(!pending.has(item.room))pending.set(item.room,item)}}catch(e){failed=true;if(!pending.has(item.room))pending.set(item.room,item)}}
+  if(busy||!pending.size)return;busy=true;clearTimeout(timer);const batch=[...pending.values()];pending.clear();let failed=false,error='';
+  for(const item of batch){try{const r=await fetch(NTFY(item.room),{method:'POST',body:item.payload});if(!r.ok){failed=true;let detail='';try{detail=(await r.text()).slice(0,80)}catch(e){}error='HTTP '+r.status+(detail?': '+detail:'');if(!pending.has(item.room))pending.set(item.room,item)}}catch(e){failed=true;error=e.name==='TypeError'?'Network or CORS error':e.message;if(!pending.has(item.room))pending.set(item.room,item)}}
   busy=false;
-  if(failed){setLive('○ Live: retrying…');clearTimeout(timer);timer=setTimeout(flush,5000)}
+  if(failed){setLive('○ Live: '+error+'; retrying…');clearTimeout(timer);timer=setTimeout(flush,5000)}
   else{setLive('● Live: synced');if(pending.size){clearTimeout(timer);timer=setTimeout(flush,0)}}
 }
 const cur=()=>cfg.slots.find(s=>s.id===cfg.sel);

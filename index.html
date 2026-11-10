@@ -21,30 +21,48 @@
   body.overlay #preview{position:fixed;inset:0;height:auto!important;max-width:none;margin:0;background:transparent;border:0;border-radius:0}
 
   /* ---------- editor ---------- */
-  #editor{display:grid;grid-template-columns:minmax(300px,34%) 1fr;gap:16px;padding:16px;align-items:start}
-  @media(max-width:860px){#editor{grid-template-columns:1fr}}
-  #left{position:sticky;top:16px}
-  @media(max-width:860px){#left{position:static}}
-  #preview{position:relative;width:100%;max-width:340px;margin:0 auto;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  /* 3 vertical columns that fill the window: the page itself never scrolls */
+  #editor{display:grid;grid-template-columns:minmax(220px,21%) minmax(0,1fr) minmax(500px,41%);gap:12px;padding:12px;align-items:stretch;overflow:hidden;
+    height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+    height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+  .col{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 2px 2px 0;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  @media(max-width:1000px){#editor{display:block;height:auto;overflow:visible}.col{overflow:visible;margin-bottom:12px}}
+  #preview{position:relative;width:100%;max-width:max(180px,min(100%,calc((100vh - 340px)*.5625)));margin:0 auto;border:1px solid var(--line);border-radius:10px;overflow:hidden;
     background:radial-gradient(circle at 18% 12%,#246b73 0,transparent 42%),radial-gradient(circle at 88% 82%,#243c66 0,transparent 46%),#101923}
-  #preview.land{max-width:none}
+  #preview.land{max-width:100%}
   #canvas{position:absolute;left:0;top:0;transform-origin:0 0}
-  .panel-bar{display:flex;align-items:center;justify-content:space-between;margin:12px 0 0;gap:8px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:visible}
-  .card h3{margin:0;padding:11px 14px;font-size:14px;background:var(--card2);border-radius:9px 9px 0 0;display:flex;justify-content:space-between;gap:8px}
+  .panel-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:8px 0 0;gap:8px}
+  .panel-bar>*{min-width:0}
+  #left .panel-bar button{flex:1 1 100%}
+  #left .panel-bar input{flex:1 1 100%}
+  .note{color:var(--mut);font-size:11px;line-height:1.45;margin:8px 0 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:visible}
+  .card h3{margin:0;padding:8px 12px;font-size:13px;background:var(--card2);border-radius:9px 9px 0 0;display:flex;justify-content:space-between;gap:8px}
   .card h3 small{color:var(--mut);font-weight:400}
-  .body{padding:12px 14px;display:grid;gap:10px}
-  .row{display:grid;grid-template-columns:110px 44px 1fr;gap:10px;align-items:center}
-  .trow{display:grid;grid-template-columns:80px 1fr;gap:10px;align-items:center}
-  .offset-row{display:grid;grid-template-columns:80px 1fr 52px;gap:10px;align-items:center}
+  .body{padding:10px 12px;display:grid;gap:8px}
+  .row{display:grid;grid-template-columns:96px 40px 1fr;gap:8px;align-items:center}
+  .trow{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center}
+  .offset-row{display:grid;grid-template-columns:80px 1fr 52px;gap:8px;align-items:center}
   .offset-row input{width:100%;accent-color:var(--acc)}
   .offset-row output{font-size:12px;color:var(--mut);text-align:right}
-  .srow{display:grid;grid-template-columns:80px 1fr 124px 36px 64px auto;gap:8px;align-items:center}
-  @media(max-width:620px){.srow{grid-template-columns:1fr 1fr}.srow label:first-child{grid-column:1/-1}}
+  .srow{display:grid;grid-template-columns:62px minmax(0,1fr) 104px 32px 54px auto;gap:6px;align-items:center}
+  .srow select,.srow input[type=number]{padding:6px 6px}
+  .srow button{padding:6px 0}
+  .srow .gsw{white-space:nowrap;gap:5px}
+  @media(max-width:620px){.srow{grid-template-columns:1fr 1fr}.srow>label:first-child{grid-column:1/-1}}
+
+  /* confirm dialog */
+  #dlg{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:#0009;padding:16px}
+  #dlg.open{display:flex}
+  #dlg .box{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px 18px 14px;max-width:360px;width:100%}
+  #dlg h4{margin:0 0 6px;font-size:15px}
+  #dlg p{margin:0 0 14px;color:var(--mut);font-size:13px}
+  #dlg .btns{display:flex;gap:8px;justify-content:flex-end}
+  #dlg .danger{background:#d64545;border-color:#d64545;color:#fff;font-weight:600}
   label{color:var(--mut);font-size:12px}
-  input[type=text],input[type=number],select{width:100%;background:var(--field);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit}
-  input[type=color]{width:44px;height:34px;padding:0;border:1px solid var(--line);border-radius:6px;background:none}
-  button{background:var(--field);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit;cursor:pointer}
+  input[type=text],input[type=number],select{width:100%;background:var(--field);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit}
+  input[type=color]{width:40px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:none}
+  button{background:var(--field);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;cursor:pointer}
   button.on{background:var(--acc);border-color:var(--acc);color:#fff}
   button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
   .primary{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;padding:9px 14px}
@@ -87,10 +105,6 @@
   .lt.on .header{transition-delay:.05s}.lt.on .title{transition-delay:.17s}.lt.on .subtitle{transition-delay:.29s}
   .lt.on .header b{transition-delay:.55s}.lt.on .title b{transition-delay:.65s}.lt.on .subtitle b{transition-delay:.75s}
   .lt:not(.on) .subtitle{transition-delay:0s}.lt:not(.on) .title{transition-delay:.1s}.lt:not(.on) .header{transition-delay:.2s}
-  .lt.anim-fade div{transform:scale(.94);opacity:0;transition:transform .4s ease,opacity .4s ease}
-  .lt.anim-fade.on div{transform:scale(1);opacity:1;transition:transform .45s ease,opacity .45s ease}
-  .lt.anim-rise div{transform:translateY(24px);opacity:0;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .35s ease}
-  .lt.anim-rise.on div{transform:translateY(0);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s ease}
   .lt div::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.45) 50%,transparent 65%);transform:translateX(-120%)}
   .lt.on div::before{transform:translateX(120%);transition:transform .8s ease .55s}
   .bar{position:absolute;left:-18px;top:0;bottom:0;width:8px;border-radius:3px;background:var(--ac);transform:scaleY(0);transform-origin:bottom;transition:transform .35s cubic-bezier(.6,0,.4,1) .45s}
@@ -103,6 +117,32 @@
     border:1px solid rgba(255,255,255,.4);text-shadow:0 1px 6px rgba(0,0,0,.3);
     box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),inset 0 -1.5px 1px rgba(255,255,255,.15),inset 0 0 14px rgba(255,255,255,.12),0 8px 22px rgba(10,0,30,.3)}
   @media(prefers-reduced-motion:reduce){.lt div,.lt b,.bar{transition-duration:.01s!important;transition-delay:0s!important}.lt div::before{display:none}}
+
+  /* ===== animation: BLUR RISE — soft de-blur, lift and settle ===== */
+  .lt.a-rise div{transform:translateY(46px) scale(.93);filter:blur(14px);opacity:0;transition:transform .45s cubic-bezier(.5,0,.8,.4),opacity .35s ease,filter .4s ease}
+  .lt.a-rise.on div{transform:none;filter:blur(0);opacity:1;transition:transform .95s cubic-bezier(.16,1.05,.3,1),opacity .6s ease,filter .75s ease}
+  .lt.a-rise.on .header{transition-delay:.05s}.lt.a-rise.on .title{transition-delay:.2s}.lt.a-rise.on .subtitle{transition-delay:.35s}
+  .lt.a-rise b{transform:scale(.94);filter:blur(8px);opacity:0;transition:opacity .2s,filter .2s,transform .2s}
+  .lt.a-rise.on b{transform:none;filter:blur(0);opacity:1;transition:opacity .6s,filter .6s,transform .7s cubic-bezier(.2,.9,.3,1.1)}
+  .lt.a-rise.on .header b{transition-delay:.4s}.lt.a-rise.on .title b{transition-delay:.55s}.lt.a-rise.on .subtitle b{transition-delay:.7s}
+
+  /* ===== animation: GLOW WIPE — curtain reveal with a glowing leading edge ===== */
+  .lt.a-wipe{--hide:inset(-30px calc(100% + 30px) -30px -30px);--wx:-16px;--edge:wipeEdge}
+  .lt.a-wipe.p-bottom-right,.lt.a-wipe.p-top-right{--hide:inset(-30px -30px -30px calc(100% + 30px));--wx:16px;--edge:wipeEdgeR}
+  .lt.a-wipe div{transform:none;opacity:1;clip-path:var(--hide);transition:clip-path .5s cubic-bezier(.7,0,.84,0)}
+  .lt.a-wipe.on div{clip-path:inset(-30px);transition:clip-path .85s cubic-bezier(.65,0,.3,1)}
+  .lt.a-wipe.on .header{transition-delay:.05s}.lt.a-wipe.on .title{transition-delay:.2s}.lt.a-wipe.on .subtitle{transition-delay:.35s}
+  .lt.a-wipe b{transform:translateX(var(--wx));opacity:0;transition:opacity .2s,transform .2s}
+  .lt.a-wipe.on b{transform:none;opacity:1;transition:opacity .5s,transform .7s cubic-bezier(.16,1,.3,1)}
+  .lt.a-wipe.on .header b{transition-delay:.45s}.lt.a-wipe.on .title b{transition-delay:.6s}.lt.a-wipe.on .subtitle b{transition-delay:.75s}
+  .lt.a-wipe div::after{content:"";position:absolute;top:0;bottom:0;left:0;width:6px;pointer-events:none;opacity:0;
+    background:linear-gradient(transparent,rgba(255,255,255,.95) 20%,#fff 50%,rgba(255,255,255,.95) 80%,transparent);
+    box-shadow:0 0 18px 5px rgba(255,255,255,.65),0 0 40px 10px rgba(255,255,255,.25)}
+  .lt.a-wipe.on div::after{animation:var(--edge) .85s cubic-bezier(.65,0,.3,1) both}
+  .lt.a-wipe.on .header::after{animation-delay:.05s}.lt.a-wipe.on .title::after{animation-delay:.2s}.lt.a-wipe.on .subtitle::after{animation-delay:.35s}
+  @keyframes wipeEdge{0%{left:0;opacity:1}80%{opacity:1}100%{left:calc(100% - 6px);opacity:0}}
+  @keyframes wipeEdgeR{0%{left:calc(100% - 6px);opacity:1}80%{opacity:1}100%{left:0;opacity:0}}
+  @media(prefers-reduced-motion:reduce){.lt div::after{animation:none!important}}
   .p-bottom-left{left:calc(7% + var(--offset-x,0px));bottom:calc(12% - var(--offset-y,0px))}
   .p-bottom-center{left:calc(50% + var(--offset-x,0px));bottom:calc(12% - var(--offset-y,0px));transform:translateX(-50%);align-items:center}
   .p-bottom-right{right:calc(7% - var(--offset-x,0px));bottom:calc(12% - var(--offset-y,0px));align-items:flex-end}
@@ -114,7 +154,7 @@
 </head>
 <body>
 <div id="editor">
-  <div id="left">
+  <div id="left" class="col">
     <div id="preview"></div>
     <div class="panel-bar">
       <span id="live" style="color:var(--mut);font-size:12px">Preview</span>
@@ -122,11 +162,10 @@
     </div>
     <div class="panel-bar"><input type="text" id="url" readonly placeholder="Overlay URL appears here"></div>
     <div class="panel-bar"><button id="copyAll">Copy combined widget URL</button></div>
-    <p style="color:var(--mut);font-size:12px">Enable the slots you want to show together, then copy the combined URL to use them in one OBS Browser source. Set the source size to <b>1080 × 1920</b> for 9:16 (or <b>1920 × 1080</b> for 16:9). Updates sync live through ntfy.sh while this editor stays open. Keep the URL private, since it contains your secret room code. The background is transparent.</p>
+    <p class="note">Enable the slots you want to show together, then copy the combined URL to use them in one OBS Browser source. Set the source size to <b>1080 × 1920</b> for 9:16 (or <b>1920 × 1080</b> for 16:9). Updates sync live through ntfy.sh while this editor stays open. Keep the URL private, since it contains your secret room code. The background is transparent.</p>
   </div>
 
-  <div id="right">
-    <div class="panel-bar"><span>Page theme</span><button id="themeToggle" type="button">Switch to dark mode</button></div>
+  <div id="mid" class="col">
     <div class="card"><h3>Slots</h3><div class="body">
       <small style="color:var(--mut)">Each slot has its own settings and overlay URL. Turn on multiple slots to run multiple widgets.</small>
       <div id="slots"></div>
@@ -140,6 +179,10 @@
     </div></div>
 
     <div class="card"><h3>Color Palette</h3><div class="body" id="colors"></div></div>
+  </div>
+
+  <div id="right" class="col">
+    <div class="panel-bar" style="margin-top:0;margin-bottom:10px"><span>Page theme</span><button id="themeToggle" type="button">Switch to dark mode</button></div>
     <div class="card"><h3>Base Corner Radius</h3><div class="body" id="radii"></div></div>
     <div class="card"><h3>Style</h3><div class="body" id="styles"></div></div>
 
@@ -158,13 +201,20 @@
             <option value="bottom-right">Bottom right</option>
           </optgroup>
         </select></div>
-      <div class="trow"><label>Animation</label><select data-p="animation"><option value="slide">Slide</option><option value="fade">Fade</option><option value="rise">Rise</option></select></div>
       <div class="offset-row"><label for="offset-x">Horizontal</label><input id="offset-x" type="range" min="-600" max="600" step="1" data-p="layout.x"><output data-value="layout.x">0 px</output></div>
       <div class="offset-row"><label for="offset-y">Vertical</label><input id="offset-y" type="range" min="-600" max="600" step="1" data-p="layout.y"><output data-value="layout.y">0 px</output></div>
+      <div class="trow"><label>Animation</label>
+        <select data-p="layout.anim"><option value="slide">Slide</option><option value="rise">Blur Rise</option><option value="wipe">Glow Wipe</option></select></div>
       <div class="trow"><label>Gradient</label><label class="sw"><input type="checkbox" data-p="layout.gradient"><span></span></label></div>
     </div></div>
-    <button id="reset">Reset to defaults</button>
+    <button id="reset" style="width:100%">Reset to defaults</button>
   </div>
+</div>
+
+<div id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgT">
+  <div class="box"><h4 id="dlgT">Reset to defaults?</h4>
+    <p>This will erase all slots and settings and restore the defaults. This can't be undone.</p>
+    <div class="btns"><button type="button" id="dlgNo">Cancel</button><button type="button" id="dlgYes" class="danger">Reset</button></div></div>
 </div>
 
 <script>
@@ -174,7 +224,7 @@ const DEF={
   slots:[{id:'s1',name:'Slot 1',text:{header:'',title:'បងៗនៅខេត្ត សូមជួយវេរលុយមុន',subtitle:''},
     colors:{header:'#ffffff',headerBase:'#ff0000',title:'#0000ff',titleBase:'#ffffff',subtitle:'#111111',subtitleBase:'#ffffff'},
     style:{header:{f:'Hanuman',w:'400',i:false,s:34},title:{f:'Hanuman',w:'400',i:false,s:56},subtitle:{f:'Hanuman',w:'400',i:false,s:38}},
-    glass:{header:false,title:false,subtitle:false},radius:{header:10,title:10,subtitle:10},layout:{gradient:true,pos:'bottom-left',aspect:'9:16',x:0,y:0},animation:'slide',enabled:false}],
+    glass:{header:false,title:false,subtitle:false},radius:{header:10,title:10,subtitle:10},layout:{gradient:true,pos:'bottom-left',aspect:'9:16',x:0,y:0,anim:'slide'},enabled:false}],
   sel:'s1',active:null
 };
 const SLOT_DEFAULT=DEF.slots[0];
@@ -184,65 +234,19 @@ const QP=new URLSearchParams(location.search+'&'+location.hash.slice(1));
 const isOverlay=QP.has('overlay')||QP.has('room');
 const targetSlot=QP.get('slot');
 const allSlots=QP.get('all')==='1';
-const previewHidden=new Set();
 if(isOverlay)document.documentElement.classList.add('ov');
 const $=id=>document.getElementById(id);
 
 function merge(a,b){const o=Array.isArray(a)?[...a]:{...a};for(const k in b)o[k]=(b[k]&&typeof b[k]==='object'&&a[k]&&typeof a[k]==='object')?merge(a[k],b[k]):b[k];return o}
 function clone(x){return JSON.parse(JSON.stringify(x))}
-const asObject=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
-function ensureSlotData(raw,i=0){
-  const s=asObject(raw),base=SLOT_DEFAULT;
-  s.id=s.id||'s'+(i+1);if(typeof s.name!=='string')s.name='Slot '+(i+1);
-  const text={...base.text,...asObject(s.text)};
-  KEYS.forEach(k=>text[k]=text[k]==null?'':String(text[k]));s.text=text;
-  s.colors={...base.colors,...asObject(s.colors)};
-  Object.keys(base.colors).forEach(k=>{if(!/^#[0-9a-f]{6}$/i.test(s.colors[k]))s.colors[k]=base.colors[k]});
-  s.style=Object.fromEntries(KEYS.map(k=>{
-    const v={...base.style[k],...asObject(asObject(s.style)[k])};
-    if(!FONTS.includes(v.f))v.f=base.style[k].f;
-    if(!WEIGHTS.some(([weight])=>weight===String(v.w)))v.w=base.style[k].w;
-    v.i=!!v.i;v.s=Number.isFinite(+v.s)?Math.max(8,Math.min(300,+v.s)):base.style[k].s;
-    return[k,v];
-  }));
-  s.glass={...base.glass,...asObject(s.glass)};
-  KEYS.forEach(k=>s.glass[k]=!!s.glass[k]);
-  s.radius={...base.radius,...asObject(s.radius)};
-  KEYS.forEach(k=>s.radius[k]=Number.isFinite(+s.radius[k])?Math.max(0,Math.min(48,+s.radius[k])):base.radius[k]);
-  s.layout={...base.layout,...asObject(s.layout)};
-  if(!['bottom-left','bottom-center','bottom-right','top-left','top-center','top-right','center'].includes(s.layout.pos))s.layout.pos=base.layout.pos;
-  if(!['9:16','16:9'].includes(s.layout.aspect))s.layout.aspect=base.layout.aspect;
-  s.layout.x=Number.isFinite(+s.layout.x)?Math.max(-600,Math.min(600,+s.layout.x)):0;
-  s.layout.y=Number.isFinite(+s.layout.y)?Math.max(-600,Math.min(600,+s.layout.y)):0;
-  s.layout.gradient=!!s.layout.gradient;
-  if(!['slide','fade','rise'].includes(s.animation))s.animation=base.animation;
-  if(typeof s.enabled!=='boolean')s.enabled=false;
-  return s;
-}
 function migrate(o){
-  if(o&&o.text&&!Array.isArray(o.slots)){o.slots=[{id:'s1',name:'Slot 1',text:o.text}];o.sel='s1'}
-  if(o&&Object.prototype.hasOwnProperty.call(o,'text'))delete o.text;
+  if(o&&o.text){o.slots=[{id:'s1',name:'Slot 1',text:o.text}];o.sel='s1'}
   if(!o||!Array.isArray(o.slots))return o;
-  o.slots=o.slots.map((raw,i)=>{
-    const s=asObject(raw);
+  o.slots=o.slots.map(s=>{
     const hasPerSlot=!!(s.style||s.colors||s.glass||s.radius||s.layout);
-    const legacy=hasPerSlot?{}:asObject(o);
-    const legacyLayout=hasPerSlot?{}:{gradient:legacy.gradient??SLOT_DEFAULT.layout.gradient,pos:legacy.pos||SLOT_DEFAULT.layout.pos,aspect:legacy.aspect||SLOT_DEFAULT.layout.aspect};
-    const style={};
-    KEYS.forEach(k=>style[k]={...SLOT_DEFAULT.style[k],...asObject(asObject(legacy.style)[k]),...asObject(asObject(s.style)[k])});
-    const layout={...SLOT_DEFAULT.layout,...legacyLayout,...asObject(s.layout)};
-    if(!['bottom-left','bottom-center','bottom-right','top-left','top-center','top-right','center'].includes(layout.pos))layout.pos=SLOT_DEFAULT.layout.pos;
-    if(!['9:16','16:9'].includes(layout.aspect))layout.aspect=SLOT_DEFAULT.layout.aspect;
-    return ensureSlotData({
-      ...clone(SLOT_DEFAULT),...s,
-      id:s.id||'s'+(i+1),name:typeof s.name==='string'?s.name:'Slot '+(i+1),
-      text:{...SLOT_DEFAULT.text,...asObject(s.text)},
-      colors:{...SLOT_DEFAULT.colors,...asObject(legacy.colors),...asObject(s.colors)},style,
-      glass:{...SLOT_DEFAULT.glass,...asObject(legacy.glass),...asObject(s.glass)},
-      radius:{...SLOT_DEFAULT.radius,...asObject(s.radius)},layout,
-      animation:['slide','fade','rise'].includes(s.animation)?s.animation:SLOT_DEFAULT.animation,
-      enabled:typeof s.enabled==='boolean'?s.enabled:o.active===s.id
-    },i);
+    const base=clone(SLOT_DEFAULT);
+    if(!hasPerSlot){base.colors=o.colors||base.colors;base.style=o.style||base.style;base.glass=o.glass||base.glass;base.layout={gradient:o.gradient??base.layout.gradient,pos:o.pos||base.layout.pos,aspect:o.aspect||base.layout.aspect,x:0,y:0}}
+    return merge(merge(base,s),{layout:merge(base.layout,s.layout||{}),enabled:s.enabled??(o.active===s.id)});
   });
   return o;
 }
@@ -253,7 +257,6 @@ function load(){
 }
 let cfg=load();
 if(!cfg.slots.length)cfg.slots=clone(DEF.slots);
-cfg.slots=cfg.slots.map((s,i)=>ensureSlotData(s,i));
 if(!cfg.slots.some(s=>s.id===cfg.sel))cfg.sel=cfg.slots[0].id;
 if(!isOverlay)cfg.active=null;
 else if(!cfg.slots.some(s=>s.id===cfg.active))cfg.active=cfg.slots[0].id;
@@ -289,22 +292,10 @@ async function flush(){
   else if(failed){setLive('○ Live: '+error+'; retrying…');clearTimeout(timer);timer=setTimeout(flush,5000)}
   else{setLive('● Live: synced');if(pending.size){clearTimeout(timer);timer=setTimeout(flush,0)}}
 }
-const cur=()=>{
-  if(!Array.isArray(cfg.slots))cfg.slots=[];
-  if(!cfg.slots.length)cfg.slots=clone(DEF.slots);
-  let i=cfg.slots.findIndex(s=>s?.id===cfg.sel);
-  if(i<0){i=0;cfg.sel=cfg.slots[0]?.id||'s1'}
-  return cfg.slots[i]=ensureSlotData(cfg.slots[i],i);
-};
-function ref(p){if(p.startsWith('slot.'))return[cur(),p.slice(5)];if(['colors.','style.','glass.','radius.','layout.','animation'].some(x=>p===x||p.startsWith(x+'.')))return[cur(),p];return[cfg,p]}
-function getP(p){const[r,q]=ref(p);return q.split('.').reduce((o,k)=>o?.[k],r)??''}
-function setP(p,v){
-  const[r,q]=ref(p),k=q.split('.');let o=r;
-  if(!o){cfg.slots=Array.isArray(cfg.slots)?cfg.slots:[];if(!cfg.slots.length)cfg.slots=clone(DEF.slots);cfg.sel=cfg.slots[0].id||'s1';o=cur()}
-  if(o===cfg)o=cfg;
-  while(k.length>1){const part=k.shift();if(!o[part]||typeof o[part]!=='object'||Array.isArray(o[part]))o[part]={};o=o[part]}
-  o[k[0]]=v;
-}
+const cur=()=>cfg.slots.find(s=>s.id===cfg.sel);
+function ref(p){if(p.startsWith('slot.'))return[cur(),p.slice(5)];if(['colors.','style.','glass.','radius.','layout.'].some(x=>p.startsWith(x)))return[cur(),p];return[cfg,p]}
+function getP(p){const[r,q]=ref(p);return q.split('.').reduce((o,k)=>o[k],r)}
+function setP(p,v){const[r,q]=ref(p),k=q.split('.');let o=r;while(k.length>1)o=o[k.shift()];o[k[0]]=v}
 function shade(h){const m=/^#?([0-9a-f]{6})$/i.exec(h);if(!m)return h;const n=parseInt(m[1],16);const f=c=>Math.round(c*.9).toString(16).padStart(2,'0');return '#'+f(n>>16)+f((n>>8)&255)+f(n&255)}
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid=()=>'s'+Math.random().toString(36).slice(2,8);
@@ -325,11 +316,10 @@ function paint(){
   const[W,H]=dims();canvas.style.width=W+'px';canvas.style.height=H+'px';
   [...canvas.querySelectorAll('.lt')].forEach(n=>{if(!cfg.slots.some(s=>s.id===n.dataset.id))n.remove()});
   cfg.slots.forEach(s=>{
-    s=ensureSlotData(s,cfg.slots.indexOf(s));
     if(isOverlay&&targetSlot&&s.id!==targetSlot)return;
     let n=canvas.querySelector('.lt[data-id="'+s.id+'"]');const fresh=!n;
     if(!n){n=document.createElement('div');n.dataset.id=s.id;n.innerHTML='<i class="bar"></i><div class="header"><b></b></div><div class="title"><b></b></div><div class="subtitle"><b></b></div>';canvas.appendChild(n)}
-    const cls='lt anim-'+(s.animation||'slide')+' p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}const visible=cfg.active===s.id||s.enabled||(!isOverlay&&s.id===cfg.sel&&!previewHidden.has(s.id));n.className=cls+(visible?' on':'');
+    const cls='lt p-'+s.layout.pos+' a-'+(['rise','wipe'].includes(s.layout.anim)?s.layout.anim:'slide');if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled)||(isOverlay&&s.enabled&&(targetSlot||allSlots)))?' on':'');
     n.style.setProperty('--offset-x',(s.layout.x||0)+'px');n.style.setProperty('--offset-y',(s.layout.y||0)+'px');
     n.style.setProperty('--ac',s.colors.headerBase);
     KEYS.forEach(k=>{
@@ -377,14 +367,14 @@ if(!isOverlay){
     $('tn').textContent=cur().name;
     $('url').value=liveUrl(cur());
   }
-  function updateField(el){
+  fields.forEach(el=>el.addEventListener('input',()=>{
     let v=el.type==='checkbox'?el.checked:(el.type==='number'||el.type==='range')?(+el.value||0):el.value;
     setP(el.dataset.p,v);sync(el);paint();save();
-  }
-  fields.forEach(el=>{
-    const eventName=el.tagName==='SELECT'||el.type==='checkbox'?'change':'input';
-    el.addEventListener(eventName,()=>updateField(el));
-  });
+    if(el.dataset.p==='layout.anim'&&cur().enabled){ /* replay the new animation in the preview */
+      const n=canvas.querySelector('.lt[data-id="'+cur().id+'"]');
+      if(n){n.classList.remove('on');setTimeout(()=>{if(cur().enabled)paint()},1000)}
+    }
+  }));
   document.querySelectorAll('[data-i]').forEach(b=>b.addEventListener('click',()=>{
     const s=cur().style[b.dataset.i];s.i=!s.i;sync();paint();save();
   }));
@@ -401,7 +391,6 @@ if(!isOverlay){
   }
   function select(id){
     if(cfg.sel===id)return;cfg.sel=id;
-    previewHidden.delete(id);
     list.querySelectorAll('.slot').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));
     sync();persist();
   }
@@ -414,7 +403,7 @@ if(!isOverlay){
     const structureChanged=['d','u','w','x'].includes(b.dataset.a);
     const i=cfg.slots.findIndex(s=>s.id===id);
     switch(b.dataset.a){
-      case 't':{const s=cfg.slots[i];s.enabled=!s.enabled;if(s.enabled)previewHidden.delete(id);else previewHidden.add(id);b.classList.toggle('on',s.enabled);break}
+      case 't':{const s=cfg.slots[i];s.enabled=!s.enabled;b.classList.toggle('on',s.enabled);break}
       case 'e':$('ttitle').focus();break;
       case 'm':row.querySelector('.menu').classList.toggle('open');return;
       case 'd':{const c=clone(cfg.slots[i]);c.id=uid();delete c.room;c.enabled=false;c.name+=' copy';cfg.slots.splice(i+1,0,c);cfg.sel=c.id;renderSlots();sync();break}
@@ -433,7 +422,12 @@ if(!isOverlay){
     const s={...clone(SLOT_DEFAULT),id:uid(),enabled:false,name:'Slot '+(cfg.slots.length+1),text:{header:'',title:'New title',subtitle:''}};
     cfg.slots.push(s);cfg.sel=s.id;renderSlots();sync();paint();persist();pushAll(true);$('ttitle').focus();$('ttitle').select();
   });
-  $('reset').addEventListener('click',()=>{cfg=clone(DEF);renderSlots();sync();paint();persist();pushAll(true);});
+  const dlg=$('dlg'),closeDlg=()=>{dlg.classList.remove('open');$('reset').focus()};
+  $('reset').addEventListener('click',()=>{dlg.classList.add('open');$('dlgNo').focus()});
+  $('dlgNo').addEventListener('click',closeDlg);
+  dlg.addEventListener('click',e=>{if(e.target===dlg)closeDlg()});
+  addEventListener('keydown',e=>{if(e.key==='Escape'&&dlg.classList.contains('open'))closeDlg()});
+  $('dlgYes').addEventListener('click',()=>{closeDlg();cfg=clone(DEF);renderSlots();sync();paint();persist();pushAll(true);});
   $('copy').addEventListener('click',async()=>{
     const url=liveUrl();push(true);
     const box=$('url');box.value=url;
@@ -457,7 +451,7 @@ if(!isOverlay){
     const n=JSON.parse(m.message),map=new Map(cfg.slots.map(s=>[s.id,s]));
     if(n.snapshotAll)map.clear();
     n.slots.forEach(s=>map.set(s.id,s));
-    const nc=merge(DEF,n);delete nc.snapshotAll;nc.slots=[...map.values()].map((s,i)=>ensureSlotData(s,i));if(!nc.slots.length)nc.slots=clone(DEF.slots);if(!nc.slots.some(s=>s.id===nc.sel))nc.sel=nc.slots[0].id;if(targetSlot&&nc.slots.some(s=>s.id===targetSlot))nc.sel=targetSlot;cfg=nc;paint();
+    const nc=merge(DEF,n);delete nc.snapshotAll;nc.slots=[...map.values()];if(targetSlot&&map.has(targetSlot))nc.sel=targetSlot;cfg=nc;paint();
   }catch(e){}};
   addEventListener('resize',fit);
 }else{

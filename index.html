@@ -87,6 +87,10 @@
   .lt.on .header{transition-delay:.05s}.lt.on .title{transition-delay:.17s}.lt.on .subtitle{transition-delay:.29s}
   .lt.on .header b{transition-delay:.55s}.lt.on .title b{transition-delay:.65s}.lt.on .subtitle b{transition-delay:.75s}
   .lt:not(.on) .subtitle{transition-delay:0s}.lt:not(.on) .title{transition-delay:.1s}.lt:not(.on) .header{transition-delay:.2s}
+  .lt.anim-fade div{transform:scale(.94);opacity:0;transition:transform .4s ease,opacity .4s ease}
+  .lt.anim-fade.on div{transform:scale(1);opacity:1;transition:transform .45s ease,opacity .45s ease}
+  .lt.anim-rise div{transform:translateY(24px);opacity:0;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .35s ease}
+  .lt.anim-rise.on div{transform:translateY(0);opacity:1;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s ease}
   .lt div::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.45) 50%,transparent 65%);transform:translateX(-120%)}
   .lt.on div::before{transform:translateX(120%);transition:transform .8s ease .55s}
   .bar{position:absolute;left:-18px;top:0;bottom:0;width:8px;border-radius:3px;background:var(--ac);transform:scaleY(0);transform-origin:bottom;transition:transform .35s cubic-bezier(.6,0,.4,1) .45s}
@@ -154,6 +158,7 @@
             <option value="bottom-right">Bottom right</option>
           </optgroup>
         </select></div>
+      <div class="trow"><label>Animation</label><select data-p="animation"><option value="slide">Slide</option><option value="fade">Fade</option><option value="rise">Rise</option></select></div>
       <div class="offset-row"><label for="offset-x">Horizontal</label><input id="offset-x" type="range" min="-600" max="600" step="1" data-p="layout.x"><output data-value="layout.x">0 px</output></div>
       <div class="offset-row"><label for="offset-y">Vertical</label><input id="offset-y" type="range" min="-600" max="600" step="1" data-p="layout.y"><output data-value="layout.y">0 px</output></div>
       <div class="trow"><label>Gradient</label><label class="sw"><input type="checkbox" data-p="layout.gradient"><span></span></label></div>
@@ -169,7 +174,7 @@ const DEF={
   slots:[{id:'s1',name:'Slot 1',text:{header:'',title:'បងៗនៅខេត្ត សូមជួយវេរលុយមុន',subtitle:''},
     colors:{header:'#ffffff',headerBase:'#ff0000',title:'#0000ff',titleBase:'#ffffff',subtitle:'#111111',subtitleBase:'#ffffff'},
     style:{header:{f:'Hanuman',w:'400',i:false,s:34},title:{f:'Hanuman',w:'400',i:false,s:56},subtitle:{f:'Hanuman',w:'400',i:false,s:38}},
-    glass:{header:false,title:false,subtitle:false},radius:{header:10,title:10,subtitle:10},layout:{gradient:true,pos:'bottom-left',aspect:'9:16',x:0,y:0},enabled:false}],
+    glass:{header:false,title:false,subtitle:false},radius:{header:10,title:10,subtitle:10},layout:{gradient:true,pos:'bottom-left',aspect:'9:16',x:0,y:0},animation:'slide',enabled:false}],
   sel:'s1',active:null
 };
 const SLOT_DEFAULT=DEF.slots[0];
@@ -238,7 +243,7 @@ async function flush(){
   else{setLive('● Live: synced');if(pending.size){clearTimeout(timer);timer=setTimeout(flush,0)}}
 }
 const cur=()=>cfg.slots.find(s=>s.id===cfg.sel);
-function ref(p){if(p.startsWith('slot.'))return[cur(),p.slice(5)];if(['colors.','style.','glass.','radius.','layout.'].some(x=>p.startsWith(x)))return[cur(),p];return[cfg,p]}
+function ref(p){if(p.startsWith('slot.'))return[cur(),p.slice(5)];if(['colors.','style.','glass.','radius.','layout.','animation'].some(x=>p===x||p.startsWith(x+'.')))return[cur(),p];return[cfg,p]}
 function getP(p){const[r,q]=ref(p);return q.split('.').reduce((o,k)=>o[k],r)}
 function setP(p,v){const[r,q]=ref(p),k=q.split('.');let o=r;while(k.length>1)o=o[k.shift()];o[k[0]]=v}
 function shade(h){const m=/^#?([0-9a-f]{6})$/i.exec(h);if(!m)return h;const n=parseInt(m[1],16);const f=c=>Math.round(c*.9).toString(16).padStart(2,'0');return '#'+f(n>>16)+f((n>>8)&255)+f(n&255)}
@@ -264,7 +269,7 @@ function paint(){
     if(isOverlay&&targetSlot&&s.id!==targetSlot)return;
     let n=canvas.querySelector('.lt[data-id="'+s.id+'"]');const fresh=!n;
     if(!n){n=document.createElement('div');n.dataset.id=s.id;n.innerHTML='<i class="bar"></i><div class="header"><b></b></div><div class="title"><b></b></div><div class="subtitle"><b></b></div>';canvas.appendChild(n)}
-    const cls='lt p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled)||(isOverlay&&s.enabled&&(targetSlot||allSlots)))?' on':'');
+    const cls='lt anim-'+(s.animation||'slide')+' p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled)||(isOverlay&&s.enabled&&(targetSlot||allSlots)))?' on':'');
     n.style.setProperty('--offset-x',(s.layout.x||0)+'px');n.style.setProperty('--offset-y',(s.layout.y||0)+'px');
     n.style.setProperty('--ac',s.colors.headerBase);
     KEYS.forEach(k=>{

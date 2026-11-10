@@ -184,19 +184,65 @@ const QP=new URLSearchParams(location.search+'&'+location.hash.slice(1));
 const isOverlay=QP.has('overlay')||QP.has('room');
 const targetSlot=QP.get('slot');
 const allSlots=QP.get('all')==='1';
+const previewHidden=new Set();
 if(isOverlay)document.documentElement.classList.add('ov');
 const $=id=>document.getElementById(id);
 
 function merge(a,b){const o=Array.isArray(a)?[...a]:{...a};for(const k in b)o[k]=(b[k]&&typeof b[k]==='object'&&a[k]&&typeof a[k]==='object')?merge(a[k],b[k]):b[k];return o}
 function clone(x){return JSON.parse(JSON.stringify(x))}
+const asObject=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
+function ensureSlotData(raw,i=0){
+  const s=asObject(raw),base=SLOT_DEFAULT;
+  s.id=s.id||'s'+(i+1);if(typeof s.name!=='string')s.name='Slot '+(i+1);
+  const text={...base.text,...asObject(s.text)};
+  KEYS.forEach(k=>text[k]=text[k]==null?'':String(text[k]));s.text=text;
+  s.colors={...base.colors,...asObject(s.colors)};
+  Object.keys(base.colors).forEach(k=>{if(!/^#[0-9a-f]{6}$/i.test(s.colors[k]))s.colors[k]=base.colors[k]});
+  s.style=Object.fromEntries(KEYS.map(k=>{
+    const v={...base.style[k],...asObject(asObject(s.style)[k])};
+    if(!FONTS.includes(v.f))v.f=base.style[k].f;
+    if(!WEIGHTS.some(([weight])=>weight===String(v.w)))v.w=base.style[k].w;
+    v.i=!!v.i;v.s=Number.isFinite(+v.s)?Math.max(8,Math.min(300,+v.s)):base.style[k].s;
+    return[k,v];
+  }));
+  s.glass={...base.glass,...asObject(s.glass)};
+  KEYS.forEach(k=>s.glass[k]=!!s.glass[k]);
+  s.radius={...base.radius,...asObject(s.radius)};
+  KEYS.forEach(k=>s.radius[k]=Number.isFinite(+s.radius[k])?Math.max(0,Math.min(48,+s.radius[k])):base.radius[k]);
+  s.layout={...base.layout,...asObject(s.layout)};
+  if(!['bottom-left','bottom-center','bottom-right','top-left','top-center','top-right','center'].includes(s.layout.pos))s.layout.pos=base.layout.pos;
+  if(!['9:16','16:9'].includes(s.layout.aspect))s.layout.aspect=base.layout.aspect;
+  s.layout.x=Number.isFinite(+s.layout.x)?Math.max(-600,Math.min(600,+s.layout.x)):0;
+  s.layout.y=Number.isFinite(+s.layout.y)?Math.max(-600,Math.min(600,+s.layout.y)):0;
+  s.layout.gradient=!!s.layout.gradient;
+  if(!['slide','fade','rise'].includes(s.animation))s.animation=base.animation;
+  if(typeof s.enabled!=='boolean')s.enabled=false;
+  return s;
+}
 function migrate(o){
-  if(o&&o.text){o.slots=[{id:'s1',name:'Slot 1',text:o.text}];o.sel='s1'}
+  if(o&&o.text&&!Array.isArray(o.slots)){o.slots=[{id:'s1',name:'Slot 1',text:o.text}];o.sel='s1'}
+  if(o&&Object.prototype.hasOwnProperty.call(o,'text'))delete o.text;
   if(!o||!Array.isArray(o.slots))return o;
-  o.slots=o.slots.map(s=>{
+  o.slots=o.slots.map((raw,i)=>{
+    const s=asObject(raw);
     const hasPerSlot=!!(s.style||s.colors||s.glass||s.radius||s.layout);
-    const base=clone(SLOT_DEFAULT);
-    if(!hasPerSlot){base.colors=o.colors||base.colors;base.style=o.style||base.style;base.glass=o.glass||base.glass;base.layout={gradient:o.gradient??base.layout.gradient,pos:o.pos||base.layout.pos,aspect:o.aspect||base.layout.aspect,x:0,y:0}}
-    return merge(merge(base,s),{layout:merge(base.layout,s.layout||{}),enabled:s.enabled??(o.active===s.id)});
+    const legacy=hasPerSlot?{}:asObject(o);
+    const legacyLayout=hasPerSlot?{}:{gradient:legacy.gradient??SLOT_DEFAULT.layout.gradient,pos:legacy.pos||SLOT_DEFAULT.layout.pos,aspect:legacy.aspect||SLOT_DEFAULT.layout.aspect};
+    const style={};
+    KEYS.forEach(k=>style[k]={...SLOT_DEFAULT.style[k],...asObject(asObject(legacy.style)[k]),...asObject(asObject(s.style)[k])});
+    const layout={...SLOT_DEFAULT.layout,...legacyLayout,...asObject(s.layout)};
+    if(!['bottom-left','bottom-center','bottom-right','top-left','top-center','top-right','center'].includes(layout.pos))layout.pos=SLOT_DEFAULT.layout.pos;
+    if(!['9:16','16:9'].includes(layout.aspect))layout.aspect=SLOT_DEFAULT.layout.aspect;
+    return ensureSlotData({
+      ...clone(SLOT_DEFAULT),...s,
+      id:s.id||'s'+(i+1),name:typeof s.name==='string'?s.name:'Slot '+(i+1),
+      text:{...SLOT_DEFAULT.text,...asObject(s.text)},
+      colors:{...SLOT_DEFAULT.colors,...asObject(legacy.colors),...asObject(s.colors)},style,
+      glass:{...SLOT_DEFAULT.glass,...asObject(legacy.glass),...asObject(s.glass)},
+      radius:{...SLOT_DEFAULT.radius,...asObject(s.radius)},layout,
+      animation:['slide','fade','rise'].includes(s.animation)?s.animation:SLOT_DEFAULT.animation,
+      enabled:typeof s.enabled==='boolean'?s.enabled:o.active===s.id
+    },i);
   });
   return o;
 }
@@ -207,6 +253,7 @@ function load(){
 }
 let cfg=load();
 if(!cfg.slots.length)cfg.slots=clone(DEF.slots);
+cfg.slots=cfg.slots.map((s,i)=>ensureSlotData(s,i));
 if(!cfg.slots.some(s=>s.id===cfg.sel))cfg.sel=cfg.slots[0].id;
 if(!isOverlay)cfg.active=null;
 else if(!cfg.slots.some(s=>s.id===cfg.active))cfg.active=cfg.slots[0].id;
@@ -242,10 +289,22 @@ async function flush(){
   else if(failed){setLive('○ Live: '+error+'; retrying…');clearTimeout(timer);timer=setTimeout(flush,5000)}
   else{setLive('● Live: synced');if(pending.size){clearTimeout(timer);timer=setTimeout(flush,0)}}
 }
-const cur=()=>cfg.slots.find(s=>s.id===cfg.sel);
+const cur=()=>{
+  if(!Array.isArray(cfg.slots))cfg.slots=[];
+  if(!cfg.slots.length)cfg.slots=clone(DEF.slots);
+  let i=cfg.slots.findIndex(s=>s?.id===cfg.sel);
+  if(i<0){i=0;cfg.sel=cfg.slots[0]?.id||'s1'}
+  return cfg.slots[i]=ensureSlotData(cfg.slots[i],i);
+};
 function ref(p){if(p.startsWith('slot.'))return[cur(),p.slice(5)];if(['colors.','style.','glass.','radius.','layout.','animation'].some(x=>p===x||p.startsWith(x+'.')))return[cur(),p];return[cfg,p]}
-function getP(p){const[r,q]=ref(p);return q.split('.').reduce((o,k)=>o[k],r)}
-function setP(p,v){const[r,q]=ref(p),k=q.split('.');let o=r;while(k.length>1)o=o[k.shift()];o[k[0]]=v}
+function getP(p){const[r,q]=ref(p);return q.split('.').reduce((o,k)=>o?.[k],r)??''}
+function setP(p,v){
+  const[r,q]=ref(p),k=q.split('.');let o=r;
+  if(!o){cfg.slots=Array.isArray(cfg.slots)?cfg.slots:[];if(!cfg.slots.length)cfg.slots=clone(DEF.slots);cfg.sel=cfg.slots[0].id||'s1';o=cur()}
+  if(o===cfg)o=cfg;
+  while(k.length>1){const part=k.shift();if(!o[part]||typeof o[part]!=='object'||Array.isArray(o[part]))o[part]={};o=o[part]}
+  o[k[0]]=v;
+}
 function shade(h){const m=/^#?([0-9a-f]{6})$/i.exec(h);if(!m)return h;const n=parseInt(m[1],16);const f=c=>Math.round(c*.9).toString(16).padStart(2,'0');return '#'+f(n>>16)+f((n>>8)&255)+f(n&255)}
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid=()=>'s'+Math.random().toString(36).slice(2,8);
@@ -266,10 +325,11 @@ function paint(){
   const[W,H]=dims();canvas.style.width=W+'px';canvas.style.height=H+'px';
   [...canvas.querySelectorAll('.lt')].forEach(n=>{if(!cfg.slots.some(s=>s.id===n.dataset.id))n.remove()});
   cfg.slots.forEach(s=>{
+    s=ensureSlotData(s,cfg.slots.indexOf(s));
     if(isOverlay&&targetSlot&&s.id!==targetSlot)return;
     let n=canvas.querySelector('.lt[data-id="'+s.id+'"]');const fresh=!n;
     if(!n){n=document.createElement('div');n.dataset.id=s.id;n.innerHTML='<i class="bar"></i><div class="header"><b></b></div><div class="title"><b></b></div><div class="subtitle"><b></b></div>';canvas.appendChild(n)}
-    const cls='lt anim-'+(s.animation||'slide')+' p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}n.className=cls+((cfg.active===s.id||(!isOverlay&&s.enabled)||(isOverlay&&s.enabled&&(targetSlot||allSlots)))?' on':'');
+    const cls='lt anim-'+(s.animation||'slide')+' p-'+s.layout.pos;if(fresh){n.className=cls;void n.offsetWidth}const visible=cfg.active===s.id||s.enabled||(!isOverlay&&s.id===cfg.sel&&!previewHidden.has(s.id));n.className=cls+(visible?' on':'');
     n.style.setProperty('--offset-x',(s.layout.x||0)+'px');n.style.setProperty('--offset-y',(s.layout.y||0)+'px');
     n.style.setProperty('--ac',s.colors.headerBase);
     KEYS.forEach(k=>{
@@ -317,10 +377,14 @@ if(!isOverlay){
     $('tn').textContent=cur().name;
     $('url').value=liveUrl(cur());
   }
-  fields.forEach(el=>el.addEventListener('input',()=>{
+  function updateField(el){
     let v=el.type==='checkbox'?el.checked:(el.type==='number'||el.type==='range')?(+el.value||0):el.value;
     setP(el.dataset.p,v);sync(el);paint();save();
-  }));
+  }
+  fields.forEach(el=>{
+    const eventName=el.tagName==='SELECT'||el.type==='checkbox'?'change':'input';
+    el.addEventListener(eventName,()=>updateField(el));
+  });
   document.querySelectorAll('[data-i]').forEach(b=>b.addEventListener('click',()=>{
     const s=cur().style[b.dataset.i];s.i=!s.i;sync();paint();save();
   }));
@@ -337,6 +401,7 @@ if(!isOverlay){
   }
   function select(id){
     if(cfg.sel===id)return;cfg.sel=id;
+    previewHidden.delete(id);
     list.querySelectorAll('.slot').forEach(r=>r.classList.toggle('sel',r.dataset.id===id));
     sync();persist();
   }
@@ -349,7 +414,7 @@ if(!isOverlay){
     const structureChanged=['d','u','w','x'].includes(b.dataset.a);
     const i=cfg.slots.findIndex(s=>s.id===id);
     switch(b.dataset.a){
-      case 't':{const s=cfg.slots[i];s.enabled=!s.enabled;b.classList.toggle('on',s.enabled);break}
+      case 't':{const s=cfg.slots[i];s.enabled=!s.enabled;if(s.enabled)previewHidden.delete(id);else previewHidden.add(id);b.classList.toggle('on',s.enabled);break}
       case 'e':$('ttitle').focus();break;
       case 'm':row.querySelector('.menu').classList.toggle('open');return;
       case 'd':{const c=clone(cfg.slots[i]);c.id=uid();delete c.room;c.enabled=false;c.name+=' copy';cfg.slots.splice(i+1,0,c);cfg.sel=c.id;renderSlots();sync();break}
@@ -392,7 +457,7 @@ if(!isOverlay){
     const n=JSON.parse(m.message),map=new Map(cfg.slots.map(s=>[s.id,s]));
     if(n.snapshotAll)map.clear();
     n.slots.forEach(s=>map.set(s.id,s));
-    const nc=merge(DEF,n);delete nc.snapshotAll;nc.slots=[...map.values()];if(targetSlot&&map.has(targetSlot))nc.sel=targetSlot;cfg=nc;paint();
+    const nc=merge(DEF,n);delete nc.snapshotAll;nc.slots=[...map.values()].map((s,i)=>ensureSlotData(s,i));if(!nc.slots.length)nc.slots=clone(DEF.slots);if(!nc.slots.some(s=>s.id===nc.sel))nc.sel=nc.slots[0].id;if(targetSlot&&nc.slots.some(s=>s.id===targetSlot))nc.sel=targetSlot;cfg=nc;paint();
   }catch(e){}};
   addEventListener('resize',fit);
 }else{
